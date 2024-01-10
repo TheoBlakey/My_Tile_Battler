@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 
 [CustomEditor(typeof(AbstractDungeonGenerator), true)]
@@ -15,8 +13,9 @@ public class RandomDungeonGeneratorEditor : Editor
 
     public override void OnInspectorGUI()
     {
+        //check changes
         base.OnInspectorGUI();
-        if(GUILayout.Button("Create Dungeon"))
+        if (GUILayout.Button("Create Dungeon"))
         {
             generator.GenerateDungeon();
         }
