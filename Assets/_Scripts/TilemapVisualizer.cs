@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using static Goblin_Script;
@@ -260,7 +262,7 @@ public class TilemapVisualizer : MonoBehaviour
             //x = (float)((x * 0.27) + offSet);
             //y = (float)((y * 0.31) + offSet);
 
-
+            GameObject HexTileRefFromPath = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>("Assets/Objects/Hex_Tile.prefab").GameObject();
             GameObject HexTileGameObject = Instantiate(HexTileRef, new Vector3(x, y), new Quaternion());
 
             HexTileGameObject.GetComponent<TileScript>().GridLocation = Position;
