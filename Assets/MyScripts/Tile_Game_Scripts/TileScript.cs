@@ -13,10 +13,17 @@ public class TileScript : MonoBehaviour
     [SerializeField]
     SpriteRenderer spriteRenderer;
 
+    [SerializeField]
+    public GameControllerScript _gc = null;
+    public GameControllerScript GameController
+    {
+        get => _gc != null ? _gc : _gc = FindObjectsOfType<GameControllerScript>().FirstOrDefault().GetComponent<GameControllerScript>();
+    }
+
     public List<TileScript> _neighbours;
     public List<TileScript> Neighbours
     {
-        get => _neighbours.Any() ? _neighbours : _neighbours = GameConroller.GetallTileNeighbours(this);
+        get => _neighbours.Any() ? _neighbours : _neighbours = GameController.PathFindingComponent.GetallTileNeighbours(this);
         set => _neighbours = value;
     }
 
@@ -26,22 +33,15 @@ public class TileScript : MonoBehaviour
     [SerializeField]
     public Vector2Int GridLocation;
 
-
-
-
-
-
-    private UnitScript _currentUnit;
+    private UnitScript _cu;
     public UnitScript CurrentUnit
     {
-        get => _currentUnit;
+        get => _cu;
         set
         {
-            _currentUnit = value;
-            if (Team != value.Team)
-            {
-                Team = value.Team;
-            }
+            _cu = value;
+            Team = value.Team;
+
         }
     }
 
@@ -54,7 +54,7 @@ public class TileScript : MonoBehaviour
        new (0, 0.25f, 0, 0.5f), //dark green
        new (1, 0, 1, 0.5f), //magenta
        new (0, 1, 0, 1), //green
-       new(1, 1, 1, 1) //whhite
+       new(1, 1, 1, 1) //white
     };
 
 
@@ -102,12 +102,6 @@ public class TileScript : MonoBehaviour
 
     public UnitScript UnitOnTile;
 
-    [SerializeField]
-    public GameControllerScript _gameController = null;
-    public GameControllerScript GameConroller
-    {
-        get => _gameController != null ? _gameController : _gameController = FindObjectsOfType<GameControllerScript>().FirstOrDefault().GetComponent<GameControllerScript>();
-    }
 
     public void CalculateSprite()
     {
@@ -154,30 +148,13 @@ public class TileScript : MonoBehaviour
 
     void SetSeaBorder()
     {
-        if (GameConroller.GetNeighbourN(this).Type == TileScript.TileType.Water)
+        TilePathFindingComponent.DirectionList.ForEach(direction =>
         {
-            transform.Find("N").gameObject.SetActive(true);
-        }
-        if (GameConroller.GetNeighbourS(this).Type == TileScript.TileType.Water)
-        {
-            transform.Find("S").gameObject.SetActive(true);
-        }
-        if (GameConroller.GetNeighbourSE(this).Type == TileScript.TileType.Water)
-        {
-            transform.Find("SE").gameObject.SetActive(true);
-        }
-        if (GameConroller.GetNeighbourSW(this).Type == TileScript.TileType.Water)
-        {
-            transform.Find("SW").gameObject.SetActive(true);
-        }
-        if (GameConroller.GetNeighbourNW(this).Type == TileScript.TileType.Water)
-        {
-            transform.Find("NW").gameObject.SetActive(true);
-        }
-        if (GameConroller.GetNeighbourNE(this).Type == TileScript.TileType.Water)
-        {
-            transform.Find("NE").gameObject.SetActive(true);
-        }
+            if (GameController.PathFindingComponent.GetNeighbour(this, direction).Type == TileScript.TileType.Water)
+            {
+                transform.Find(nameof(direction)).gameObject.SetActive(true);
+            }
+        });
     }
 
 
