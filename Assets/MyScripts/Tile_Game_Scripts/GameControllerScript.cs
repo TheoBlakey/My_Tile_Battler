@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 
 public class GameControllerScript : MonoBehaviour
@@ -28,62 +29,147 @@ public class GameControllerScript : MonoBehaviour
 
             if (SelectedTileWithUnit != null)
             {
-                highlightedTiles = GetNeighboursToADistance(_selectedTile, 2, false);
+                highlightedTiles = GetTilesToADistance(_selectedTile, 2);
                 highlightedTiles.ForEach(t => t.HighLighted = true);
             }
 
         }
     }
 
+    [SerializeField]
+    public Dictionary<string, Sprite> SpriteDict = new();
+
+
+    private int LANDMOVEMENT = 2;
+    private int WATERMOVEMENT = 4;
+
     void Start()
     {
 
     }
 
+    public Sprite GetSprite(string SpiteName)
+    {
+        if (SpriteDict.TryGetValue(SpiteName, out Sprite sprite))
+        {
+            return sprite;
+        }
+        else
+        {
+            Sprite foundSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Objects/" + SpiteName + ".png");
+            SpriteDict.Add("SpiteName", foundSprite);
+            return foundSprite;
+        }
+    }
+
     public void PopulateTileList()
     {
-        TileScript[] tileScripts = Object.FindObjectsOfType<TileScript>();
+        TileScript[] tileScripts = FindObjectsOfType<TileScript>();
         FullTileList = new List<TileScript>(tileScripts);
     }
 
-    //public void CreatelandBorder()
-    //{
-    //    List<TileScript> LandTiles = new List<TileScript>(FullTileList.Where(x => x.Type == TileScript.TileType.Land).ToArray());
+    public List<TileScript> GetPossibleMovements(TileScript OriginalTile)
+    {
+        bool isPort = OriginalTile.isNextToSea && OriginalTile.Type == TileScript.TileType.City;
+        List<TileScript> possibleMovements = new();
+        switch (isPort, OriginalTile.IsLandOrCity)
+        {
+            case (true, _):
+                possibleMovements.Union(GetLegalTilesToADistance(OriginalTile, LANDMOVEMENT, new List<TypeOfMovement> { TypeOfMovement.LandToLand }));
+                possibleMovements.Union(GetLegalTilesToADistance(OriginalTile, WATERMOVEMENT, new List<TypeOfMovement> { TypeOfMovement.LandToWater, TypeOfMovement.WaterToWater }));
+                break;
+            case (_, true):
+                possibleMovements.Union(GetLegalTilesToADistance(OriginalTile, LANDMOVEMENT, new List<TypeOfMovement> { TypeOfMovement.LandToLand }));
+                break;
+            case (_, false):
+                possibleMovements.Union(GetLegalTilesToADistance(OriginalTile, WATERMOVEMENT, new List<TypeOfMovement> { TypeOfMovement.WaterToWater }));
+                break;
+        }
 
-    //    foreach (TileScript Tile in LandTiles)
-    //    {
-    //        List<string> sideList = new List<string> { };
+        return possibleMovements;
+    }
 
-    //        if (GetNeighbourN(Tile).Type == TileScript.TileType.Water)
-    //        {
-    //            transform.Find("N").gameObject.SetActive(true);
-    //        }
-    //        if (GetNeighbourS(Tile).Type == TileScript.TileType.Water)
-    //        {
-    //            transform.Find("S").gameObject.SetActive(true);
-    //        }
-    //        if (GetNeighbourSE(Tile).Type == TileScript.TileType.Water)
-    //        {
-    //            transform.Find("SE").gameObject.SetActive(true);
-    //        }
-    //        if (GetNeighbourSW(Tile).Type == TileScript.TileType.Water)
-    //        {
-    //            transform.Find("SW").gameObject.SetActive(true);
-    //        }
-    //        if (GetNeighbourNW(Tile).Type == TileScript.TileType.Water)
-    //        {
-    //            transform.Find("NW").gameObject.SetActive(true);
-    //        }
-    //        if (GetNeighbourNE(Tile).Type == TileScript.TileType.Water)
-    //        {
-    //            transform.Find("NE").gameObject.SetActive(true);
-    //        }
+    public List<TileScript> GetSimpleOptimumPath(TileScript startTile, TileScript endTile)
+    {
+        List<TileScript> OptimumSimplePath = new() { startTile };
+
+        List<TileScript> tempSearchTiles = new();
+        while (!OptimumSimplePath.Contains(endTile))
+        {
+            tempSearchTiles = GetTilesToADistance(OptimumSimplePath.Last(), WATERMOVEMENT);
+
+            TileScript closestToFinalTile = tempSearchTiles
+           .OrderBy(tempTile => Vector2.Distance(tempTile.transform.position, endTile.transform.position))
+           .First();
+
+            OptimumSimplePath.Add(closestToFinalTile);
+
+        }
+        return OptimumSimplePath;
+    }
+
+    public List<TileScript> GetLegalTilesToADistance(TileScript OriginalTile, int distance, List<TypeOfMovement> typesOfMovementsAllowed)
+    {
+        List<TileMovement> nonCheckedNeighbours = GetMovementNeighbours(OriginalTile, typesOfMovementsAllowed);
+        List<TileMovement> allNeighbours = nonCheckedNeighbours.ToList();
+
+        for (int i = 0; i < distance - 1; i++)
+        {
+            List<TileMovement> foundNeightbours = new();
+            foreach (TileMovement neighbour in nonCheckedNeighbours)
+            {
+                if (neighbour.CanMoveOnwards)
+                {
+                    foundNeightbours.Union(GetMovementNeighbours(neighbour.TileToMoveTo, typesOfMovementsAllowed));
+                }
+            }
+            nonCheckedNeighbours = foundNeightbours.Except(allNeighbours).ToList();
+            allNeighbours.Union(nonCheckedNeighbours);
+        }
+
+        return allNeighbours.Select(t => t.TileToMoveTo).ToList();
+    }
 
 
-    //    }
-    //}
 
-    public List<TileScript> GetallTileNeighbours(TileScript OriginalTile, bool travelOnWater = true)
+    public enum TypeOfMovement
+    { WaterToWater, LandToLand, LandToWater, WaterToLand }
+
+    private class TileMovement
+    {
+        public TileScript TileToMoveTo;
+        public TypeOfMovement TypeOfMovement;
+        public bool CanMoveOnwards => !(TypeOfMovement == TypeOfMovement.LandToWater);
+    }
+
+    private List<TileMovement> GetMovementNeighbours(TileScript OriginalTile, List<TypeOfMovement> typesOfMovementsAllowed)
+    {
+        List<TileMovement> tileMovements = new();
+        foreach (TileScript neighbour in GetallTileNeighbours(OriginalTile))
+        {
+            TypeOfMovement typeOfMovement = (OriginalTile.IsLandOrCity, neighbour.IsLandOrCity) switch
+            {
+                (true, true) => TypeOfMovement.LandToLand,
+                (true, false) => TypeOfMovement.WaterToLand,
+                (false, true) => TypeOfMovement.LandToWater,
+                (false, false) => TypeOfMovement.WaterToWater,
+            };
+
+            if (typesOfMovementsAllowed.Contains(typeOfMovement))
+            {
+                tileMovements.Add(new TileMovement()
+                {
+                    TileToMoveTo = neighbour,
+                    TypeOfMovement = typeOfMovement
+                });
+            }
+        };
+
+        return tileMovements;
+    }
+
+
+    public List<TileScript> GetallTileNeighbours(TileScript OriginalTile)
     {
         List<TileScript> neighbours = new List<TileScript>
         {
@@ -94,13 +180,6 @@ public class GameControllerScript : MonoBehaviour
             GetNeighbourSW(OriginalTile),
             GetNeighbourS(OriginalTile)
         };
-
-        if (!travelOnWater)
-        {
-            neighbours = neighbours
-                .Where(t => t.Type != TileScript.TileType.Water
-                ).ToList();
-        }
 
         return neighbours;
     }
@@ -153,20 +232,20 @@ public class GameControllerScript : MonoBehaviour
         ).FirstOrDefault();
     }
 
-    public List<TileScript> GetNeighboursToADistance(TileScript OriginalTile, int distance, bool travelOnWater)
+    public List<TileScript> GetTilesToADistance(TileScript OriginalTile, int distance)
     {
-        HashSet<TileScript> allNeighbours = new HashSet<TileScript> { };
-        HashSet<TileScript> nonCheckedNeighbours = new HashSet<TileScript> { OriginalTile };
+        List<TileScript> allNeighbours = new List<TileScript> { };
+        List<TileScript> nonCheckedNeighbours = new List<TileScript> { OriginalTile };
 
         for (int i = 0; i < distance; i++)
         {
-            HashSet<TileScript> neighboursTemp = new HashSet<TileScript>();
+            List<TileScript> neighboursTemp = new List<TileScript>();
             foreach (TileScript neighbour in nonCheckedNeighbours)
             {
-                neighboursTemp.UnionWith(GetallTileNeighbours(neighbour, travelOnWater));
+                neighboursTemp.Union(GetallTileNeighbours(neighbour));
             }
-            nonCheckedNeighbours = neighboursTemp.Except(allNeighbours).ToHashSet();
-            allNeighbours.UnionWith(nonCheckedNeighbours);
+            nonCheckedNeighbours = neighboursTemp.Except(allNeighbours).ToList();
+            allNeighbours.Union(nonCheckedNeighbours);
         }
 
         return allNeighbours.ToList();

@@ -19,7 +19,6 @@ public class HexTileBoardGenerator : MonoBehaviour
     {
         get => _hexTileRefFromPath != null ? _hexTileRefFromPath : _hexTileRefFromPath = AssetDatabase.LoadAssetAtPath<Object>("Assets/Objects/Hex_Tile.prefab").GameObject();
     }
-
     public void ClearMap()
     {
         FindObjectsOfType<GameObject>()
@@ -31,7 +30,7 @@ public class HexTileBoardGenerator : MonoBehaviour
     {
         ClearMap();
 
-        List<Vector2Int> LandCoordinates = LandGeneratorAlgorithm.GenerateLandCoordinates(MapSize, AverageIslandSize).ToList();
+        List<Vector2Int> LandCoordinates = LandGeneratorAlgorithm.GenerateLandCoordinates(MapSize, MapSize / 5).ToList();
 
         int extraWater = 10;
         List<Vector2Int> WholeMapCoordinates = GenerateWholeMapPositions(LandCoordinates, extraWater);
@@ -40,29 +39,28 @@ public class HexTileBoardGenerator : MonoBehaviour
         List<TileScript> WaterTiles = WaterCoordinates.Select(i => GenerateTileObject(i, TileScript.TileType.Water)).ToList();
         List<TileScript> LandTiles = LandCoordinates.Select(i => GenerateTileObject(i, TileScript.TileType.Land)).ToList();
         List<TileScript> AllTiles = WaterTiles.Union(LandTiles).ToList();
+        FindObjectsOfType<GameControllerScript>().FirstOrDefault().FullTileList = AllTiles;
 
-        int NUMBEROFCOSALCITIES = LandTiles.Count / 20; //50
-        int NUMBEROFLANDCITES = LandTiles.Count / 20; //50
+        int NUMBEROFCOSALCITIES = LandTiles.Count / 40; //50
+        int NUMBEROFLANDCITES = LandTiles.Count / 40; //50
 
         List<TileScript> landCities = ChooseSpacedCities(NUMBEROFLANDCITES, LandTiles, false);
-        //List<TileScript> landAndCostalCities = ChooseSpacedCities(NUMBEROFCOSALCITIES, LandTiles, true, landCities.ToList());
+        List<TileScript> landAndCostalCities = ChooseSpacedCities(NUMBEROFCOSALCITIES, LandTiles, true, landCities.ToList());
 
-        //TileScript furthestCity = FindFurthestCity(landCities, landCities);
-        //List<TileScript> teamCities = new List<TileScript> { furthestCity };
+        TileScript furthestCity = FindFurthestCity(landCities, landCities);
+        List<TileScript> teamCities = new List<TileScript> { furthestCity };
 
-        //for (int i = 0; i < PlayerNumber - 1; i++)
-        //{
-        //    teamCities.Add(FindFurthestCity(landCities, teamCities));
-        //}
+        for (int i = 0; i < PlayerNumber - 1; i++)
+        {
+            teamCities.Add(FindFurthestCity(landCities, teamCities));
+        }
 
-        //teamCities = teamCities.OrderBy(x => Random.value).ToList(); //shuffle
-        //int teamNo = 1;
-        //teamCities.ForEach(c => c.Team = teamNo++);
+        teamCities = teamCities.OrderBy(x => Random.value).ToList(); //shuffle
+        int teamNo = 1;
+        teamCities.ForEach(c => c.Team = teamNo++);
 
 
         AllTiles.ForEach(x => x.CalculateSprite());
-        FindObjectsOfType<GameControllerScript>().FirstOrDefault().FullTileList = AllTiles;
-
     }
     public List<Vector2Int> GenerateWholeMapPositions(List<Vector2Int> LandCoordinates, int extraWater)
     {
@@ -97,12 +95,19 @@ public class HexTileBoardGenerator : MonoBehaviour
     }
 
 
-    static TileScript FindFurthestCity(List<TileScript> cities1, List<TileScript> cities2)
+    static TileScript FindFurthestCity(List<TileScript> cities1, List<TileScript> cities2, int fractionToChooseFrom = 10)
     {
         ////take top perctage of list
-        TileScript furthestCity = cities1
-           .OrderByDescending(city1 => cities2.Sum(city2 => Vector2.Distance(city1.transform.position, city2.transform.position)))
-           .FirstOrDefault();
+        List<TileScript> citiesByDistance = cities1
+           .OrderByDescending(city1 => cities2.Sum(city2 => Vector2.Distance(city1.transform.position, city2.transform.position))).ToList();
+
+        int fraction = citiesByDistance.Count / fractionToChooseFrom;
+
+        // Take the first quarter of the list
+        List<TileScript> firstFractionCities = citiesByDistance.Take(fraction).ToList();
+
+        // Access the randomly chosen item
+        TileScript furthestCity = firstFractionCities[Random.Range(0, firstFractionCities.Count)];
 
         return furthestCity;
     }

@@ -52,7 +52,9 @@ public class TileScript : MonoBehaviour
        new (0, 0, 1, 0.5f), //blue
        new (1, 0, 0, 0.5f), //red
        new (0, 0.25f, 0, 0.5f), //dark green
-       new (1, 0, 1, 0.5f) //magenta
+       new (1, 0, 1, 0.5f), //magenta
+       new (0, 1, 0, 1), //green
+       new(1, 1, 1, 1) //whhite
     };
 
 
@@ -95,7 +97,7 @@ public class TileScript : MonoBehaviour
     [SerializeField]
     public TileType Type;
 
-
+    public bool IsLandOrCity => Type == TileType.Land || Type == TileType.City;
     public bool isNextToSea => Neighbours.Any(t => t.Type == TileType.Water);
 
     public UnitScript UnitOnTile;
