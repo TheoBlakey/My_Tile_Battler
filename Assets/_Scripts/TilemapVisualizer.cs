@@ -216,7 +216,7 @@ public class TilemapVisualizer : MonoBehaviour
                 {
                     randomGrassTile = grassTiles[Random.Range(0, grassTiles.Count)];
                 }
-                while (randomGrassTile.isNextToSea != shouldBeNextToSea);
+                while (randomGrassTile.IsNextToSea != shouldBeNextToSea);
 
 
                 float closestDistance = 1;

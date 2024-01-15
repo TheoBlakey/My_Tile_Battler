@@ -12,8 +12,7 @@ public class GameControllerScript : MonoBehaviour
 
     public bool DisableMouse = false;
 
-    [SerializeField]
-    public Dictionary<string, Sprite> SpriteDict = new();
+
 
     public List<TileScript> highlightedTiles = new();
 
@@ -53,12 +52,31 @@ public class GameControllerScript : MonoBehaviour
 
     }
 
+    //public Sprite GetSprite(string spriteName)
+    //{
+    //    return SpriteDict.TryGetValue(spriteName, out Sprite sprite)
+    //        ? sprite
+    //        : (SpriteDict[spriteName] = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Hex_Tiles/" + spriteName + ".png"));
+    //}
+
+    [SerializeField]
+    public Dictionary<string, Sprite> SpriteDict = new();
     public Sprite GetSprite(string spriteName)
     {
-        return SpriteDict.TryGetValue(spriteName, out Sprite sprite)
-            ? sprite
-            : (SpriteDict[spriteName] = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Objects/" + spriteName + ".png"));
+        if (SpriteDict.TryGetValue(spriteName, out Sprite sprite))
+        {
+            return sprite;
+        }
+        else
+        {
+            print("LOADED A SPRITE!!!!!");
+            string path = "Assets/Art/Hex_Tiles/" + spriteName + ".png";
+            Sprite loadedSprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            SpriteDict[spriteName] = loadedSprite;
+            return loadedSprite;
+        }
     }
+
 
     //public void PopulateTileList()
     //{

@@ -8,10 +8,9 @@ public class TileScript : MonoBehaviour
 {
     public GameObject UnitRef;
 
-    public Sprite CapitalHexSprite, WaterHexSprite, GrassHexSprite, CityHexSprite, HarborHexSprite;
 
     [SerializeField]
-    SpriteRenderer spriteRenderer;
+    SpriteRenderer spriteRenderer => GetComponent<SpriteRenderer>();
 
     [SerializeField]
     public GameControllerScript _gc = null;
@@ -20,11 +19,10 @@ public class TileScript : MonoBehaviour
         get => _gc != null ? _gc : _gc = FindObjectsOfType<GameControllerScript>().FirstOrDefault().GetComponent<GameControllerScript>();
     }
 
-    public List<TileScript> _neighbours;
+    public List<TileScript> _n;
     public List<TileScript> Neighbours
     {
-        get => _neighbours.Any() ? _neighbours : _neighbours = GameController.PathFindingComponent.GetallTileNeighbours(this);
-        set => _neighbours = value;
+        get => _n.Any() ? _n : _n = GameController.PathFindingComponent.GetallTileNeighbours(this);
     }
 
     [SerializeField]
@@ -78,64 +76,57 @@ public class TileScript : MonoBehaviour
 
 
 
-    private GameObject HighLightedShader;
-    private bool _highLighted = false;
+    private bool _h = false;
     public bool HighLighted
     {
-        get => _highLighted;
+        get => _h;
         set
         {
-            this._highLighted = value;
-            HighLightedShader = HighLightedShader != null ? HighLightedShader : transform.Find("HighLighted").gameObject;
-            HighLightedShader.SetActive(value);
-
+            _h = value;
+            transform.Find("HighLighted").gameObject.SetActive(value);
         }
     }
 
     public enum TileType
     { Water, City, Land }
+
     [SerializeField]
     public TileType Type;
 
     public bool IsLandOrCity => Type == TileType.Land || Type == TileType.City;
-    public bool isNextToSea => Neighbours.Any(t => t.Type == TileType.Water);
+    public bool IsNextToSea => Neighbours.Any(t => t.Type == TileType.Water);
 
     public UnitScript UnitOnTile;
 
 
     public void CalculateSprite()
     {
-        spriteRenderer = spriteRenderer != null ? spriteRenderer : GetComponent<SpriteRenderer>();
-
         switch (Type)
         {
             case TileType.City:
 
-                //List<string> borders = new List<string> { "N", "S", "SE", "SW", "NE", "NW" };
-                //borders.ForEach(e => transform.Find(e).gameObject.SetActive(true));
-
                 if (isCapital)
                 {
-                    spriteRenderer.sprite = CapitalHexSprite;
+                    spriteRenderer.sprite = GameController.GetSprite("CapitalTile");
                     break;
                 }
-                if (isNextToSea)
+                if (IsNextToSea)
                 {
-                    spriteRenderer.sprite = HarborHexSprite;
+                    spriteRenderer.sprite = GameController.GetSprite("PortTile");
                     break;
                 }
-                spriteRenderer.sprite = CityHexSprite;
+                spriteRenderer.sprite = GameController.GetSprite("CityTile");
                 break;
 
             case TileType.Water:
 
-                spriteRenderer.sprite = WaterHexSprite;
+                spriteRenderer.sprite = GameController.GetSprite("WaterTile");
                 break;
 
             case TileType.Land:
 
-                spriteRenderer.sprite = GrassHexSprite;
-                if (isNextToSea)
+                spriteRenderer.sprite = GameController.GetSprite("GrassTile"); ;
+                if (IsNextToSea)
                 {
                     transform.Find("Sand").gameObject.SetActive(true);
                     SetSeaBorder();
@@ -152,7 +143,7 @@ public class TileScript : MonoBehaviour
         {
             if (GameController.PathFindingComponent.GetNeighbour(this, direction).Type == TileScript.TileType.Water)
             {
-                transform.Find(nameof(direction)).gameObject.SetActive(true);
+                transform.Find(direction.ToString()).gameObject.SetActive(true);
             }
         });
     }
@@ -165,17 +156,13 @@ public class TileScript : MonoBehaviour
         PerformCityTurn();
     }
 
-    // Update is called once per frame
-    void Update()
-    {
 
-    }
 
     void PerformCityTurn()
     {
         Debug.Log("hELLo I am city and my team is:" + Team);
 
-        if (Type != TileType.City || isNextToSea || Team == 0)
+        if (Type != TileType.City || IsNextToSea || Team == 0)
         {
             return;
         }

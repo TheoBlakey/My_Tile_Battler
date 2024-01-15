@@ -10,7 +10,7 @@ public class TilePathFindingComponent : MonoBehaviour
     {
         get => _gc != null ? _gc : _gc = GetComponent<GameControllerScript>();
     }
-    private List<TileScript> FullTileList => _gc.FullTileList;
+    private List<TileScript> FullTileList => GameController.FullTileList;
 
     private readonly int LANDMOVEMENT = 2;
     private readonly int WATERMOVEMENT = 4;
@@ -21,7 +21,7 @@ public class TilePathFindingComponent : MonoBehaviour
 
     public List<TileScript> GetPossibleMovementsForUnit(TileScript OriginalTile)
     {
-        bool isPort = OriginalTile.isNextToSea && OriginalTile.Type == TileScript.TileType.City;
+        bool isPort = OriginalTile.IsNextToSea && OriginalTile.Type == TileScript.TileType.City;
         List<TileScript> possibleMovements = new();
         switch (isPort, OriginalTile.IsLandOrCity)
         {
