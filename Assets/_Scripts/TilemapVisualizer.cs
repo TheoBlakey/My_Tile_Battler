@@ -73,7 +73,7 @@ public class TilemapVisualizer : MonoBehaviour
         //List<TileScript> cityTiles = CreateTileObjects(cityPositions, TileScript.TileType.City);
 
         GameControllerScript gameController = FindObjectsOfType<GameControllerScript>().FirstOrDefault();
-        gameController.PopulateTileList();
+        //gameController.PopulateTileList();
 
 
         List<TileScript> grasstiles = gameController.FullTileList.Where(w => w.Type == TileScript.TileType.Land).ToList();

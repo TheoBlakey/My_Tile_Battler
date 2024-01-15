@@ -171,7 +171,9 @@ public class TilePathFindingComponent : MonoBehaviour
         private int _optimalDistanceNumOfMoves = -1;
         public int Hoptimal
         {
-            get => _optimalDistanceNumOfMoves != -1 ? _optimalDistanceNumOfMoves : _optimalDistanceNumOfMoves = ThisTilePathFinder.GetSimpleOptimumPath(Tile, TargetTile).Count;
+            //get => _optimalDistanceNumOfMoves != -1 ? _optimalDistanceNumOfMoves : _optimalDistanceNumOfMoves = ThisTilePathFinder.GetSimpleOptimumPath(Tile, TargetTile).Count;
+            get => (int)(_optimalDistanceNumOfMoves != -1 ? _optimalDistanceNumOfMoves : Vector2.Distance(Tile.transform.position, TargetTile.transform.position));
+            //may need to just change this to overall distance
         }
         public float Ftotal => Gcalculated + Hoptimal;
 
@@ -221,7 +223,7 @@ public class TilePathFindingComponent : MonoBehaviour
             {
                 var inSearch = toSearch.Contains(neighbour);
 
-                var costToNeighborG = currentNode.Gcalculated + 1;
+                var costToNeighborG = currentNode.Gcalculated + Vector2.Distance(currentNode.Tile.transform.position, neighbour.Tile.transform.position); // + 1;
 
                 if (inSearch && !(costToNeighborG < neighbour.Gcalculated)) //new found cost is smaller
                 {

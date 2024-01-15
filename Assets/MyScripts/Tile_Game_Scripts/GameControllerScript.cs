@@ -23,24 +23,24 @@ public class GameControllerScript : MonoBehaviour
         get => _pf != null ? _pf : _pf = gameObject.AddComponent<TilePathFindingComponent>();
     }
 
-    private TileScript _selectedTile;
+    private TileScript _st;
     public TileScript SelectedTileWithUnit
     {
-        get { return this._selectedTile; }
+        get => _st;
         set
         {
-            if (_selectedTile == value)
+            if (_st == value)
             {
                 return;
             }
-            this._selectedTile = value;
+            _st = value;
 
             highlightedTiles.ForEach(t => t.HighLighted = false);
 
             if (SelectedTileWithUnit != null)
             {
-                highlightedTiles = PathFindingComponent.GetPossibleMovementsForUnit(_selectedTile);
-                highlightedTiles.ForEach(t => t.HighLighted = true);
+                PathFindingComponent.GetPossibleMovementsForUnit(_st)
+                    .ForEach(t => t.HighLighted = true);
             }
 
         }
@@ -60,11 +60,11 @@ public class GameControllerScript : MonoBehaviour
             : (SpriteDict[spriteName] = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Objects/" + spriteName + ".png"));
     }
 
-    public void PopulateTileList()
-    {
-        TileScript[] tileScripts = FindObjectsOfType<TileScript>();
-        FullTileList = new List<TileScript>(tileScripts);
-    }
+    //public void PopulateTileList()
+    //{
+    //    TileScript[] tileScripts = FindObjectsOfType<TileScript>();
+    //    FullTileList = new List<TileScript>(tileScripts);
+    //}
 
 
 
@@ -111,8 +111,6 @@ public class GameControllerScript : MonoBehaviour
             TryToSelectUnit(clickedTile);
             return;
         }
-
-
 
         if (SelectedTileWithUnit == null && clickedTile?.UnitOnTile?.Team == 0)
         {
