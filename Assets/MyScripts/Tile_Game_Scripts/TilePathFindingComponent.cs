@@ -22,22 +22,22 @@ public class TilePathFindingComponent : MonoBehaviour
     public List<TileScript> GetPossibleMovementsForUnit(TileScript OriginalTile)
     {
         bool isPort = OriginalTile.IsNextToSea && OriginalTile.Type == TileScript.TileType.City;
-        List<TileScript> possibleMovements = new();
+        List<TileScript> moves = new();
         switch (isPort, OriginalTile.IsLandOrCity)
         {
             case (true, _):
-                possibleMovements.Union(GetLegalTilesToADistance(OriginalTile, LANDMOVEMENT, new List<TypeOfMovement> { TypeOfMovement.LandToLand }));
-                possibleMovements.Union(GetLegalTilesToADistance(OriginalTile, WATERMOVEMENT, new List<TypeOfMovement> { TypeOfMovement.LandToWater, TypeOfMovement.WaterToWater }));
+                moves = moves.Union(GetLegalTilesToADistance(OriginalTile, LANDMOVEMENT, new List<TypeOfMovement> { TypeOfMovement.LandToLand })).ToList();
+                moves = moves.Union(GetLegalTilesToADistance(OriginalTile, WATERMOVEMENT, new List<TypeOfMovement> { TypeOfMovement.LandToWater, TypeOfMovement.WaterToWater })).ToList();
                 break;
             case (_, true):
-                possibleMovements.Union(GetLegalTilesToADistance(OriginalTile, LANDMOVEMENT, new List<TypeOfMovement> { TypeOfMovement.LandToLand }));
+                moves = moves.Concat(GetLegalTilesToADistance(OriginalTile, LANDMOVEMENT, new List<TypeOfMovement> { TypeOfMovement.LandToLand })).ToList();
                 break;
             case (_, false):
-                possibleMovements.Union(GetLegalTilesToADistance(OriginalTile, WATERMOVEMENT, new List<TypeOfMovement> { TypeOfMovement.WaterToWater, TypeOfMovement.WaterToLand }));
+                moves = moves.Union(GetLegalTilesToADistance(OriginalTile, WATERMOVEMENT, new List<TypeOfMovement> { TypeOfMovement.WaterToWater, TypeOfMovement.WaterToLand })).ToList();
                 break;
         }
 
-        return possibleMovements;
+        return moves;
     }
 
 
@@ -55,7 +55,7 @@ public class TilePathFindingComponent : MonoBehaviour
                 .ToList();
 
             nonCheckedNeighbours = foundNeighbours.Except(allNeighbours).ToList();
-            allNeighbours.Union(nonCheckedNeighbours);
+            allNeighbours = allNeighbours.Union(nonCheckedNeighbours).ToList();
         }
 
         return allNeighbours.Select(t => t.TileToMoveTo).ToList();
@@ -151,10 +151,10 @@ public class TilePathFindingComponent : MonoBehaviour
             List<TileScript> neighboursTemp = new List<TileScript>();
             foreach (TileScript neighbour in nonCheckedNeighbours)
             {
-                neighboursTemp.Union(GetallTileNeighbours(neighbour));
+                neighboursTemp = neighboursTemp.Union(GetallTileNeighbours(neighbour)).ToList();
             }
             nonCheckedNeighbours = neighboursTemp.Except(allNeighbours).ToList();
-            allNeighbours.Union(nonCheckedNeighbours);
+            allNeighbours = allNeighbours.Union(nonCheckedNeighbours).ToList();
         }
 
         return allNeighbours.ToList();

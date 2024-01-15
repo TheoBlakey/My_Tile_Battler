@@ -74,7 +74,11 @@ public class HexTileBoardGenerator : MonoBehaviour
 
         teamCities = teamCities.OrderBy(x => UnityEngine.Random.value).ToList(); //shuffle
         int teamNo = 1;
-        teamCities.ForEach(c => c.Team = teamNo++);
+        teamCities.ForEach(c =>
+        {
+            c.Team = teamNo++;
+            c.IsCapital = true;
+        });
 
         PrintTime("After city finding"); //2230
 

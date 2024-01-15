@@ -2,7 +2,12 @@ using UnityEngine;
 
 public class UnitScript : MonoBehaviour
 {
+    public int Health = 10;
+    public int Morale = 10;
+
+    [SerializeField]
     public int Team;
+
     private TileScript _tileStandingOn;
     public TileScript TileStandingOn
     {
@@ -20,8 +25,6 @@ public class UnitScript : MonoBehaviour
         }
     }
 
-    public int Health = 10;
-    public int Morale = 10;
 
     public void TryToMoveTile(TileScript newTile)
     {

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 
 [Serializable()]
@@ -26,7 +27,7 @@ public class TileScript : MonoBehaviour
     }
 
     [SerializeField]
-    public bool isCapital = false;
+    public bool IsCapital = false;
 
     [SerializeField]
     public Vector2Int GridLocation;
@@ -44,7 +45,7 @@ public class TileScript : MonoBehaviour
     }
 
 
-    List<Color> ColorList = new List<Color>
+    List<Color> ColorList = new()
     {
        new (1, 1, 1, 1), //SPARE
        new (0, 0, 1, 0.5f), //blue
@@ -60,21 +61,17 @@ public class TileScript : MonoBehaviour
     private GameObject TeamShader;
 
     [SerializeField]
-    public int _team;
+    public int _t;
     public int Team
     {
-        get => _team;
+        get => _t;
         set
         {
-            this._team = value;
+            _t = value;
             TeamShader = TeamShader != null ? TeamShader : transform.Find("TeamShader").gameObject;
             TeamShader.GetComponent<SpriteRenderer>().color = ColorList[value];
-
         }
     }
-
-
-
 
     private bool _h = false;
     public bool HighLighted
@@ -105,27 +102,27 @@ public class TileScript : MonoBehaviour
         {
             case TileType.City:
 
-                if (isCapital)
+                if (IsCapital)
                 {
-                    spriteRenderer.sprite = GameController.GetSprite("CapitalTile");
+                    spriteRenderer.sprite = GetSprite("CapitalTile");
                     break;
                 }
                 if (IsNextToSea)
                 {
-                    spriteRenderer.sprite = GameController.GetSprite("PortTile");
+                    spriteRenderer.sprite = GetSprite("PortTile");
                     break;
                 }
-                spriteRenderer.sprite = GameController.GetSprite("CityTile");
+                spriteRenderer.sprite = GetSprite("CityTile");
                 break;
 
             case TileType.Water:
 
-                spriteRenderer.sprite = GameController.GetSprite("WaterTile");
+                spriteRenderer.sprite = GetSprite("WaterTile");
                 break;
 
             case TileType.Land:
 
-                spriteRenderer.sprite = GameController.GetSprite("GrassTile"); ;
+                spriteRenderer.sprite = GetSprite("GrassTile"); ;
                 if (IsNextToSea)
                 {
                     transform.Find("Sand").gameObject.SetActive(true);
@@ -135,6 +132,11 @@ public class TileScript : MonoBehaviour
         }
 
 
+    }
+    private Sprite GetSprite(string spriteName)
+    {
+        string path = "Assets/Art/Hex_Tiles/" + spriteName + ".png";
+        return AssetDatabase.LoadAssetAtPath<Sprite>(path);
     }
 
     void SetSeaBorder()
@@ -152,7 +154,7 @@ public class TileScript : MonoBehaviour
 
     void Start()
     {
-        CalculateSprite();
+        //CalculateSprite();
         PerformCityTurn();
     }
 
@@ -160,7 +162,6 @@ public class TileScript : MonoBehaviour
 
     void PerformCityTurn()
     {
-        Debug.Log("hELLo I am city and my team is:" + Team);
 
         if (Type != TileType.City || IsNextToSea || Team == 0)
         {
