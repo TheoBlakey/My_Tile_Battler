@@ -68,7 +68,8 @@ public class TilePathFindingComponent : MonoBehaviour
     {
         public TileScript TileToMoveTo;
         public TypeOfMovement TypeOfMovement;
-        public bool CanMoveOnwards => !(TypeOfMovement == TypeOfMovement.LandToWater);
+        public bool CanMoveOnwards => !(TypeOfMovement == TypeOfMovement.WaterToLand);
+        //attaching enermy or city
     }
 
     private List<TileMovement> GetMovementNeighbours(TileScript OriginalTile, List<TypeOfMovement> typesOfMovementsAllowed)
@@ -79,8 +80,8 @@ public class TilePathFindingComponent : MonoBehaviour
             TypeOfMovement typeOfMovement = (OriginalTile.IsLandOrCity, neighbour.IsLandOrCity) switch
             {
                 (true, true) => TypeOfMovement.LandToLand,
-                (true, false) => TypeOfMovement.WaterToLand,
-                (false, true) => TypeOfMovement.LandToWater,
+                (true, false) => TypeOfMovement.LandToWater,
+                (false, true) => TypeOfMovement.WaterToLand,
                 (false, false) => TypeOfMovement.WaterToWater,
             };
 

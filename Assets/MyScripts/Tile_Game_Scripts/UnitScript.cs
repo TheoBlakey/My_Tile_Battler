@@ -5,28 +5,28 @@ public class UnitScript : MonoBehaviour
     public int Health = 10;
     public int Morale = 10;
 
-    [SerializeField]
     public int Team;
 
-    private TileScript _tileStandingOn;
+    [SerializeField]
+    private TileScript _ts;
     public TileScript TileStandingOn
     {
-        get => _tileStandingOn;
+        get => _ts;
         set
         {
-            //if (_tileStandingOn != null || _tileStandingOn != value)
-            //{
-            //    _tileStandingOn.CurrentUnit = null;
-            //}
+            if (_ts != null && _ts.UnitOnTile != null)
+            {
+                _ts.UnitOnTile = null;
+            }
 
-            _tileStandingOn = value;
+            _ts = value;
+            value.UnitOnTile = this;
             transform.position = value.transform.position;
-
         }
     }
 
 
-    public void TryToMoveTile(TileScript newTile)
+    public void MoveToOrAttackTile(TileScript newTile)
     {
         TileStandingOn = newTile;
     }

@@ -32,18 +32,6 @@ public class TileScript : MonoBehaviour
     [SerializeField]
     public Vector2Int GridLocation;
 
-    private UnitScript _cu;
-    public UnitScript CurrentUnit
-    {
-        get => _cu;
-        set
-        {
-            _cu = value;
-            Team = value.Team;
-
-        }
-    }
-
 
     List<Color> ColorList = new()
     {
@@ -93,7 +81,7 @@ public class TileScript : MonoBehaviour
     public bool IsLandOrCity => Type == TileType.Land || Type == TileType.City;
     public bool IsNextToSea => Neighbours.Any(t => t.Type == TileType.Water);
 
-    public UnitScript UnitOnTile;
+    public UnitScript? UnitOnTile;
 
 
     public void CalculateSprite()
@@ -176,10 +164,9 @@ public class TileScript : MonoBehaviour
         }
 
 
-        var tempUnit = Instantiate(UnitRef, transform.position, new Quaternion()).GetComponent<UnitScript>();
-        tempUnit.Team = Team;
-        tempUnit.TileStandingOn = this;
-        UnitOnTile = tempUnit;
+        var Unit = Instantiate(UnitRef, transform.position, new Quaternion()).GetComponent<UnitScript>();
+        Unit.Team = Team;
+        Unit.TileStandingOn = this;
 
     }
 

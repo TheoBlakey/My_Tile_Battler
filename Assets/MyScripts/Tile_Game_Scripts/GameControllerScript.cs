@@ -14,7 +14,20 @@ public class GameControllerScript : MonoBehaviour
 
 
 
-    public List<TileScript> highlightedTiles = new();
+
+
+    private List<TileScript> _ht = new();
+    public List<TileScript> HighlightedTiles
+    {
+        get => _ht;
+        set
+        {
+            _ht.ForEach(t => t.HighLighted = false);
+            value.ForEach(t => t.HighLighted = true);
+            _ht = value;
+        }
+    }
+
 
     private TilePathFindingComponent _pf = null;
     public TilePathFindingComponent PathFindingComponent
@@ -28,21 +41,11 @@ public class GameControllerScript : MonoBehaviour
         get => _st;
         set
         {
-            if (_st == value) { return; }
-
             _st = value;
+            HighlightedTiles = value != null ? PathFindingComponent.GetPossibleMovementsForUnit(value) : new List<TileScript>();
 
-            highlightedTiles.ForEach(t => t.HighLighted = false);
 
-            if (SelectedTileWithUnit == null)
-            {
-                return;
-            }
-
-            PathFindingComponent.GetPossibleMovementsForUnit(value)
-                .ForEach(t => t.HighLighted = true);
-
-            print("AVALIABLE MOVEMENTS" + PathFindingComponent.GetPossibleMovementsForUnit(value).Count());
+            //print("AVALIABLE MOVEMENTS" + PathFindingComponent.GetPossibleMovementsForUnit(value).Count());
 
         }
     }
@@ -89,20 +92,33 @@ public class GameControllerScript : MonoBehaviour
             .Where(tile => tile != null)
             .FirstOrDefault();
 
-        if (SelectedTileWithUnit == null && clickedTile.UnitOnTile != null && clickedTile.UnitOnTile.Team == 1)
+        PathfindingTest(clickedTile);
+        return;
+
+        if (clickedTile.UnitOnTile != null && clickedTile.UnitOnTile.Team == 1)
         {
             SelectedTileWithUnit = clickedTile;
             return;
         }
 
-        if (SelectedTileWithUnit != clickedTile && highlightedTiles.Contains(clickedTile))
+        if (HighlightedTiles.Contains(clickedTile))
         {
-            SelectedTileWithUnit.CurrentUnit.TryToMoveTile(clickedTile);
+            SelectedTileWithUnit.UnitOnTile.MoveToOrAttackTile(clickedTile);
         }
 
         SelectedTileWithUnit = null;
 
     }
+
+    private void PathfindingTest(TileScript clickedTile)
+    {
+        var team1cap = FindObjectsOfType<TileScript>().Where(tag => tag.Team == 1).FirstOrDefault();
+        if (team1cap != null)
+        {
+            HighlightedTiles = PathFindingComponent.FindPath(clickedTile, team1cap);
+        }
+    }
+
     //public void TryToSelectUnit(TileScript clickedTile)
     //{
     //    if (clickedTile.UnitOnTile == null || clickedTile.UnitOnTile.Team != 0)
