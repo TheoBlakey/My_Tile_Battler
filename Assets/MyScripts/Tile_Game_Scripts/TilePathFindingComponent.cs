@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class TilePathFindingComponent : MonoBehaviour
@@ -30,14 +31,28 @@ public class TilePathFindingComponent : MonoBehaviour
                 moves = moves.Union(GetLegalTilesToADistance(OriginalTile, WATERMOVEMENT, new List<TypeOfMovement> { TypeOfMovement.LandToWater, TypeOfMovement.WaterToWater })).ToList();
                 break;
             case (_, true):
-                moves = moves.Concat(GetLegalTilesToADistance(OriginalTile, LANDMOVEMENT, new List<TypeOfMovement> { TypeOfMovement.LandToLand })).ToList();
+                moves = moves.Union(GetLegalTilesToADistance(OriginalTile, LANDMOVEMENT, new List<TypeOfMovement> { TypeOfMovement.LandToLand })).ToList();
                 break;
             case (_, false):
                 moves = moves.Union(GetLegalTilesToADistance(OriginalTile, WATERMOVEMENT, new List<TypeOfMovement> { TypeOfMovement.WaterToWater, TypeOfMovement.WaterToLand })).ToList();
                 break;
         }
 
+        moves.Remove(OriginalTile);
         return moves;
+    }
+
+    public float GetRayCastApproxDistance(Transform startPoint, Transform endPoint)
+    {
+        RaycastHit2D[] hits = Physics2D.RaycastAll(startPoint.position, endPoint.position - startPoint.position, Vector2.Distance(startPoint.position, endPoint.position));
+
+        List<TileScript> tiles = hits
+            .Select(hit => hit.collider.gameObject.GetComponent<TileScript>())
+            .Where(tile => tile != null)
+            .ToList();
+
+        return tiles.Sum(tile =>
+        tile.IsLandOrCity ? 1f / LANDMOVEMENT : 1f / WATERMOVEMENT);
     }
 
 
@@ -51,11 +66,15 @@ public class TilePathFindingComponent : MonoBehaviour
             List<TileMovement> foundNeighbours = nonCheckedNeighbours
                 .Where(neighbour => neighbour.CanMoveOnwards)
                 .SelectMany(neighbour => GetMovementNeighbours(neighbour.TileToMoveTo, typesOfMovementsAllowed))
-                .Distinct()
+                .DistinctBy(d => d.TileToMoveTo.GridLocation)
                 .ToList();
 
-            nonCheckedNeighbours = foundNeighbours.Except(allNeighbours).ToList();
-            allNeighbours = allNeighbours.Union(nonCheckedNeighbours).ToList();
+            //nonCheckedNeighbours = foundNeighbours.Except(allNeighbours).ToList();
+            nonCheckedNeighbours = foundNeighbours
+                .Where(x => !allNeighbours.Any(y => y.TileToMoveTo.GridLocation == x.TileToMoveTo.GridLocation))
+                .ToList();
+
+            allNeighbours = allNeighbours.Union(nonCheckedNeighbours).DistinctBy(d => d.TileToMoveTo.GridLocation).ToList();
         }
 
         return allNeighbours.Select(t => t.TileToMoveTo).ToList();
@@ -161,7 +180,7 @@ public class TilePathFindingComponent : MonoBehaviour
         return allNeighbours.ToList();
     }
 
-    public class NodeTile
+    public class NodeTile : IComparable<NodeTile>
     {
         public NodeTile ConnectedNode;
         public float Gcalculated = 0; // current calculating distance
@@ -169,11 +188,11 @@ public class TilePathFindingComponent : MonoBehaviour
         public TileScript Tile;
         public TileScript TargetTile;
 
-        private int _optimalDistanceNumOfMoves = -1;
-        public int Hoptimal
+        private float _optimalDistanceNumOfMoves = -1;
+        public float Hoptimal
         {
             //get => _optimalDistanceNumOfMoves != -1 ? _optimalDistanceNumOfMoves : _optimalDistanceNumOfMoves = ThisTilePathFinder.GetSimpleOptimumPath(Tile, TargetTile).Count;
-            get => (int)(_optimalDistanceNumOfMoves != -1 ? _optimalDistanceNumOfMoves : Vector2.Distance(Tile.transform.position, TargetTile.transform.position));
+            get => _optimalDistanceNumOfMoves != -1 ? _optimalDistanceNumOfMoves : Vector2.Distance(Tile.transform.position, TargetTile.transform.position);
             //may need to just change this to overall distance
         }
         public float Ftotal => Gcalculated + Hoptimal;
@@ -182,13 +201,18 @@ public class TilePathFindingComponent : MonoBehaviour
 
         public List<NodeTile> NodeNeighbours =>
         ThisTilePathFinder.GetPossibleMovementsForUnit(Tile)
-           .Select(t => new NodeTile()
+           .Select(newTile => new NodeTile()
            {
-               Tile = Tile,
+               Tile = newTile,
                TargetTile = TargetTile,
                ThisTilePathFinder = ThisTilePathFinder
            })
-           .ToList();
+        .ToList();
+
+        public int CompareTo(NodeTile other)
+        {
+            return Ftotal.CompareTo(other.Ftotal);
+        }
     }
 
 
@@ -201,32 +225,58 @@ public class TilePathFindingComponent : MonoBehaviour
             ThisTilePathFinder = this
         };
 
-        var toSearch = new List<NodeTile>() { startNode };
-        var processed = new List<NodeTile>();
+        var toSearchList = new List<NodeTile>() { startNode };
+        var processed = new HashSet<NodeTile>();
+        var currentNode = new NodeTile();
 
-        while (toSearch.Any())
+        int safteyVal = 0;
+
+        while (toSearchList.Any() && safteyVal < 500)
         {
-            var currentNode = toSearch[0];
-            foreach (var searchNode in toSearch)
-            {
-                if (searchNode.Ftotal < currentNode.Ftotal || (searchNode.Ftotal == currentNode.Ftotal && searchNode.Hoptimal < currentNode.Hoptimal))
-                {
-                    currentNode = searchNode;
-                }
-            }
+            safteyVal++;
+            currentNode = toSearchList[0];
+            toSearchList.RemoveAt(0);
+            processed.Add(currentNode);
+
+            //foreach (var searchNode in toSearch)
+            //{
+            //    if (searchNode.Ftotal < currentNode.Ftotal || (searchNode.Ftotal == currentNode.Ftotal && searchNode.Hoptimal < currentNode.Hoptimal))
+            //    {
+            //        currentNode = searchNode;
+            //        break;
+            //    }
+            //}
+            //var lowestFtotalNode = toSearch.OrderBy(n => n.Ftotal).First();
+            //if (lowestFtotalNode.Ftotal < currentNode.Ftotal)
+            //{
+            //    currentNode = lowestFtotalNode;
+            //}
+            //else
+            //{
+            //    currentNode = toSearch.OrderBy(n => n.Hoptimal).First();
+
+            //}
+
+
 
             if (currentNode.Tile == targetTile)
             {
                 return ReturnFullPath(currentNode, startNode);
             }
 
-            foreach (var neighbour in currentNode.NodeNeighbours.Where(t => !processed.Contains(t)))
+            var neighboursOfCurrent = currentNode.NodeNeighbours
+                .Where(neighbour => !processed
+                .Any(p => p.Tile == neighbour.Tile));
+
+            foreach (var neighbour in neighboursOfCurrent)
             {
-                var inSearch = toSearch.Contains(neighbour);
+                var neighbourInSearch = toSearchList.Any(s => s.Tile == neighbour.Tile);
+                //toSearch.Contains(neighbour);
 
                 var costToNeighborG = currentNode.Gcalculated + Vector2.Distance(currentNode.Tile.transform.position, neighbour.Tile.transform.position); // + 1;
+                //var costToNeighborG = currentNode.Gcalculated + 1; // + 1;
 
-                if (inSearch && !(costToNeighborG < neighbour.Gcalculated)) //new found cost is smaller
+                if (neighbourInSearch && !(costToNeighborG < neighbour.Gcalculated)) //new found cost is smaller
                 {
                     continue;
                 }
@@ -234,17 +284,20 @@ public class TilePathFindingComponent : MonoBehaviour
                 neighbour.Gcalculated = costToNeighborG;
                 neighbour.ConnectedNode = currentNode;
 
-                if (!inSearch)
+                if (!neighbourInSearch)
                 {
-                    toSearch.Add(neighbour);
+                    //toSearchList.Add(neighbour);
+                    InsertInOrder(toSearchList, neighbour);
+                    //toSearchList = toSearchList.Take(10).ToList();
                 }
 
             }
 
-            processed.Add(currentNode);
-            toSearch.Remove(currentNode);
+
         }
-        return null;
+        print("RETURN NULL" + safteyVal);
+        return ReturnFullPath(currentNode, startNode);
+        return new List<TileScript>();
     }
 
     public List<TileScript> ReturnFullPath(NodeTile finalNode, NodeTile startNode)
@@ -258,14 +311,20 @@ public class TilePathFindingComponent : MonoBehaviour
             currentPathNode = currentPathNode.ConnectedNode;
 
             count--;
-            if (count < 0)
-            {
-                throw new Exception("AHHHHHH");
-            }
         }
 
         return finalCompleteTilePath;
+    }
 
+    static void InsertInOrder(List<NodeTile> list, NodeTile value)
+    {
+        int index = list.BinarySearch(value);
 
+        if (index < 0)
+        {
+            index = ~index; // Get the bitwise complement of the index
+        }
+
+        list.Insert(index, value);
     }
 }

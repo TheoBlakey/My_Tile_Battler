@@ -20,6 +20,12 @@ public class HexTileBoardGenerator : MonoBehaviour
     {
         get => _hexTileRefFromPath != null ? _hexTileRefFromPath : _hexTileRefFromPath = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>("Assets/Objects/Hex_Tile.prefab").GameObject();
     }
+    public void CreateUnits()
+    {
+        FindObjectsOfType<GameControllerScript>().FirstOrDefault().FullTileList.ForEach(t => t.PerformCityTurn());
+    }
+
+
     public void ClearMap()
     {
         FindObjectsOfType<GameObject>()
@@ -31,6 +37,7 @@ public class HexTileBoardGenerator : MonoBehaviour
     public DateTime startTime;
     public void PrintTime(string message)
     {
+        return;
         var newTime = DateTime.Now;
         print(message + " : " + (newTime - startTime).TotalMilliseconds);
         startTime = newTime;
@@ -52,7 +59,10 @@ public class HexTileBoardGenerator : MonoBehaviour
         List<TileScript> WaterTiles = WaterCoordinates.Select(i => GenerateTileObject(i, TileScript.TileType.Water)).ToList();
         List<TileScript> LandTiles = LandCoordinates.Select(i => GenerateTileObject(i, TileScript.TileType.Land)).ToList();
         List<TileScript> AllTiles = WaterTiles.Union(LandTiles).ToList();
-        FindObjectsOfType<GameControllerScript>().FirstOrDefault().FullTileList = AllTiles;
+
+        var gameController = FindObjectsOfType<GameControllerScript>().FirstOrDefault();
+        gameController.FullTileList = AllTiles;
+        gameController.TeamList = Enumerable.Range(1, PlayerNumber).ToList();
 
         int NUMBEROFCOSALCITIES = LandTiles.Count / 40; //50
         int NUMBEROFLANDCITES = LandTiles.Count / 40; //50

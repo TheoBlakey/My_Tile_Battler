@@ -148,7 +148,7 @@ public class TileScript : MonoBehaviour
 
 
 
-    void PerformCityTurn()
+    public void PerformCityTurn()
     {
 
         if (Type != TileType.City || IsNextToSea || Team == 0)

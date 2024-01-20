@@ -23,5 +23,10 @@ public class HexTileBoardEditor : Editor
         {
             generator.ClearMap();
         }
+
+        if (GUILayout.Button("Create Units"))
+        {
+            generator.CreateUnits();
+        }
     }
 }
