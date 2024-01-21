@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -23,11 +25,22 @@ public class UnitScript : MonoBehaviour
     {
         get => _gc != null ? _gc : _gc = FindObjectsOfType<GameControllerScript>().FirstOrDefault().GetComponent<GameControllerScript>();
     }
+    List<Color> UnitColorList => GameController.ColorList.Select(c => new Color(c.r, c.g, c.b, 0.5f)).ToList();
 
     public int Health = 10;
     public int Morale = 10;
 
-    public int Team;
+    private int _t;
+    public int Team
+    {
+        get => _t;
+        set
+        {
+            _t = value;
+            transform.Find("TeamShader").gameObject.GetComponent<SpriteRenderer>().color = UnitColorList[value];
+            //spriteRenderer.color = UnitColorList[Team];
+        }
+    }
 
     [SerializeField]
     private TileScript _ts;
@@ -65,7 +78,8 @@ public class UnitScript : MonoBehaviour
             if (value)
             {
                 ogColor = spriteRenderer.color;
-                spriteRenderer.color = Color.grey;
+                //spriteRenderer.color = Color.grey;
+                spriteRenderer.color = Color.black;
             }
             else
             {
@@ -74,13 +88,18 @@ public class UnitScript : MonoBehaviour
         }
     }
 
-
     public void MoveToOrAttackTile(TileScript tileToMoveTo)
+    {
+        StartCoroutine(MoveToOrAttackTileCoroutine(tileToMoveTo));
+    }
+
+    IEnumerator MoveToOrAttackTileCoroutine(TileScript tileToMoveTo)
     {
         CurrentlyTravellingTo = tileToMoveTo;
 
         while (CurrentlyTravellingTo != null)
         {
+            yield return null;
         }
 
         PerformMergeOrAttack(tileToMoveTo);
@@ -89,16 +108,24 @@ public class UnitScript : MonoBehaviour
     private void FixedUpdate()
     {
         if (CurrentlyTravellingTo == null) { return; }
+        print("moving!!");
 
+        if (Vector2.Distance(transform.position, CurrentlyTravellingTo.transform.position) < 0.01f)
+        {
+            this.transform.position = CurrentlyTravellingTo.transform.position;
+        }
         if (CurrentlyTravellingTo.transform.position == this.transform.position)
         {
+            print("MADE IT!");
             CurrentlyTravellingTo = null;
+            return;
         }
 
-        float moveSpeed = 0.5f;
+
+        float moveSpeed = 1f;
         Vector3 direction = CurrentlyTravellingTo.transform.position - transform.position;
         direction.Normalize();
-        transform.position += direction * moveSpeed * Time.fixedDeltaTime;
+        this.transform.position += direction * moveSpeed * Time.fixedDeltaTime;
 
     }
 
@@ -147,10 +174,18 @@ public class UnitScript : MonoBehaviour
 
         if (survived)
         {
-            MovedThisTurn = true;
+            //MovedThisTurn = true;
             TileStandingOn = desination;
+            CaputreSurroundingTiles();
         }
 
+    }
+
+    void CaputreSurroundingTiles()
+    {
+        List<TileScript> tilesToCapture = GameController.PathFindingComponent.GetAllNeighboursToADistance(TileStandingOn, 2, false);
+        tilesToCapture.ForEach(t => t.Team = Team);
+        //TileStandingOn.Team = Team;
     }
 
     (int, int) OutComeOfBattle(UnitScript unit1, UnitScript unit2)
@@ -168,15 +203,15 @@ public class UnitScript : MonoBehaviour
         return (unit1Health, unit2Health);
     }
 
-    bool WillWinBattle(TileScript Loction)
-    {
-        UnitScript enemeyUnit = Loction.UnitOnTile;
-        if (enemeyUnit == null) { return true; }
+    //bool WillWinBattle(TileScript Loction)
+    //{
+    //    UnitScript enemeyUnit = Loction.UnitOnTile;
+    //    if (enemeyUnit == null) { return true; }
 
-        (int unit1Health, int unit2Health) = OutComeOfBattle(this, enemeyUnit);
+    //    (int unit1Health, int unit2Health) = OutComeOfBattle(this, enemeyUnit);
 
-        return unit1Health > 0;
-    }
+    //    return unit1Health > 0;
+    //}
 
     public float ChanceToWInBattle(TileScript Loction)
     {

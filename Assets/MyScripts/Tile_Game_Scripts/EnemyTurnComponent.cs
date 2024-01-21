@@ -50,7 +50,7 @@ public class EnemyTurnComponent : MonoBehaviour
 
         PossibleMove bestMove = possibleMoves
             .OrderBy(m => m.Desire)
-        .FirstOrDefault();
+            .FirstOrDefault();
 
         TileScript firstMove = GameController.PathFindingComponent.FindPath(bestMove.UnitMoving.TileStandingOn, bestMove.LocationOfMovement).FirstOrDefault();
 

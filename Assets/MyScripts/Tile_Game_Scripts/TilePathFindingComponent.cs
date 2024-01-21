@@ -149,7 +149,7 @@ public class TilePathFindingComponent : MonoBehaviour
         List<TileScript> tempSearchTiles = new();
         while (!OptimumSimplePath.Contains(endTile))
         {
-            tempSearchTiles = GetStraightTilesToALocation(OptimumSimplePath.Last(), WATERMOVEMENT);
+            tempSearchTiles = GetAllNeighboursToADistance(OptimumSimplePath.Last(), WATERMOVEMENT);
 
             TileScript closestToFinalTile = tempSearchTiles
            .OrderBy(tempTile => Vector2.Distance(tempTile.transform.position, endTile.transform.position))
@@ -161,7 +161,7 @@ public class TilePathFindingComponent : MonoBehaviour
         return OptimumSimplePath;
     }
 
-    public List<TileScript> GetStraightTilesToALocation(TileScript OriginalTile, int distance)
+    public List<TileScript> GetAllNeighboursToADistance(TileScript OriginalTile, int distance, bool allowCitiesandWater = true)
     {
         List<TileScript> allNeighbours = new List<TileScript> { };
         List<TileScript> nonCheckedNeighbours = new List<TileScript> { OriginalTile };
@@ -171,12 +171,16 @@ public class TilePathFindingComponent : MonoBehaviour
             List<TileScript> neighboursTemp = new List<TileScript>();
             foreach (TileScript neighbour in nonCheckedNeighbours)
             {
-                neighboursTemp = neighboursTemp.Union(GetallTileNeighbours(neighbour)).ToList();
+                var neighbours = GetallTileNeighbours(neighbour)
+                         .Where(n => allowCitiesandWater || n.Type == TileScript.TileType.Land)
+                         .ToList();
+                neighboursTemp = neighboursTemp.Union(neighbours).ToList();
             }
             nonCheckedNeighbours = neighboursTemp.Except(allNeighbours).ToList();
             allNeighbours = allNeighbours.Union(nonCheckedNeighbours).ToList();
         }
 
+        allNeighbours.Remove(OriginalTile);
         return allNeighbours.ToList();
     }
 

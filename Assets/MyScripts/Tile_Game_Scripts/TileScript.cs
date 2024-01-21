@@ -32,17 +32,7 @@ public class TileScript : MonoBehaviour
     [SerializeField]
     public Vector2Int GridLocation;
 
-
-    List<Color> ColorList = new()
-    {
-       new (1, 1, 1, 1), //SPARE
-       new (0, 0, 1, 0.5f), //blue
-       new (1, 0, 0, 0.5f), //red
-       new (0, 0.25f, 0, 0.5f), //dark green
-       new (1, 0, 1, 0.5f), //magenta
-       new (0, 1, 0, 1), //green
-       new(1, 1, 1, 1) //white
-    };
+    List<Color> TileColorList => GameController.ColorList.Select(c => new Color(c.r, c.g, c.b, 0.5f)).ToList();
 
 
     [SerializeField]
@@ -57,7 +47,15 @@ public class TileScript : MonoBehaviour
         {
             _t = value;
             TeamShader = TeamShader != null ? TeamShader : transform.Find("TeamShader").gameObject;
-            TeamShader.GetComponent<SpriteRenderer>().color = ColorList[value];
+
+            if (Type != TileType.City)
+            {
+                TeamShader.GetComponent<SpriteRenderer>().color = TileColorList[value];
+                return;
+            }
+            Color c = TileColorList[value];
+            TeamShader.GetComponent<SpriteRenderer>().color = new Color(c.r, c.g, c.b, 0.25f);
+
         }
     }
 

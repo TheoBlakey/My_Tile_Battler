@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -10,6 +11,16 @@ public class GameControllerScript : MonoBehaviour
 
     public bool WaitingForMovementToEnd = false;
 
+    public List<Color> ColorList = new()
+    {
+       new (1, 1, 1, 1), //SPARE
+       new (0, 0, 1, 0.5f), //blue
+       new (1, 0, 0, 0.5f), //red
+       new (0, 0.25f, 0, 0.5f), //dark green
+       new (1, 0, 1, 0.5f), //magenta
+       new (0, 1, 0, 1), //green
+       new(1, 1, 1, 1) //white
+    };
 
     [SerializeField]
     public List<int> TeamList;
@@ -99,7 +110,7 @@ public class GameControllerScript : MonoBehaviour
             .Where(tile => tile != null)
             .FirstOrDefault();
 
-        if (clickedTile.UnitOnTile != null && clickedTile.UnitOnTile.Team == 1)
+        if (clickedTile.UnitOnTile != null && clickedTile.UnitOnTile.Team == 1 && !clickedTile.UnitOnTile.MovedThisTurn)
         {
             SelectedTileWithUnit = clickedTile;
             return;
@@ -109,6 +120,12 @@ public class GameControllerScript : MonoBehaviour
         {
             SelectedTileWithUnit.UnitOnTile.MoveToOrAttackTile(clickedTile);
             playerTurnsLeft--;
+
+            List<UnitScript> moreUnitsToMove = FindObjectsOfType<UnitScript>().Where(u => u.Team == 1 && !u.MovedThisTurn).ToList();
+            if (moreUnitsToMove.Count == 0)
+            {
+                playerTurnsLeft = 0;
+            }
         }
 
         SelectedTileWithUnit = null;
@@ -128,7 +145,7 @@ public class GameControllerScript : MonoBehaviour
     }
 
 
-    private void MASTERGAMESTART()
+    IEnumerator MASTERGAMESTART()
     {
         int MAXGAMETURNS = 1000;
 
@@ -137,40 +154,44 @@ public class GameControllerScript : MonoBehaviour
         for (int i = 0; i < MAXGAMETURNS; i++)
         {
             int currentIndex = i % TeamList.Count;
-            PefromTeamTurn(TeamList[currentIndex]);
+            yield return StartCoroutine(PefromTeamTurn(TeamList[currentIndex]));
+
         }
+
+        yield return null;
 
     }
 
 
-    private void PerformPlayerTurn()
+    IEnumerator PerformPlayerTurn()
     {
         playerTurnsLeft = NUMBEROFMOVESPERTURN;
-        while (playerTurnsLeft != 0)
+        while (playerTurnsLeft != 0 || WaitingForMovementToEnd)
         {
-
+            yield return null;
         }
     }
 
-    private void PefromTeamTurn(int teamNum)
+    IEnumerator PefromTeamTurn(int teamNum)
     {
-        List<TileScript> teamCiteis = AllCities.Where(t => t.Team == teamNum).ToList();
+        List<TileScript> teamCities = AllCities.Where(t => t.Team == teamNum).ToList();
         bool TeamHasCapital = AllCities.Any(c => c.IsCapital);
-        if (!TeamHasCapital) { return; }
+        if (!TeamHasCapital) { yield break; }
 
-        teamCiteis.ForEach(c => { c.PerformCityTurn(); });
+        teamCities.ForEach(c => c.PerformCityTurn());
 
         if (teamNum == 1)
         {
-            PerformPlayerTurn();
-            return;
+            yield return StartCoroutine(PerformPlayerTurn());
         }
-
-
-        for (int i = 0; i < NUMBEROFMOVESPERTURN; i++)
+        else
         {
-            while (!WaitingForMovementToEnd)
+            for (int i = 0; i < NUMBEROFMOVESPERTURN; i++)
             {
+                while (WaitingForMovementToEnd)
+                {
+                    yield return null;
+                }
                 EnemyTurnComponent.PerfromEnemyTeamMove(teamNum);
             }
         }
