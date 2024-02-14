@@ -8,6 +8,7 @@ using UnityEngine;
 public class TileScript : MonoBehaviour
 {
     public GameObject UnitRef;
+    //= AssetDatabase.LoadAssetAtPath<UnityEngine.Object>("Assets/Objects/Unit.prefab").GameObject();
 
 
     [SerializeField]
@@ -47,15 +48,19 @@ public class TileScript : MonoBehaviour
         {
             _t = value;
             TeamShader = TeamShader != null ? TeamShader : transform.Find("TeamShader").gameObject;
-
-            if (Type != TileType.City)
-            {
-                TeamShader.GetComponent<SpriteRenderer>().color = TileColorList[value];
-                return;
-            }
             Color c = TileColorList[value];
-            TeamShader.GetComponent<SpriteRenderer>().color = new Color(c.r, c.g, c.b, 0.25f);
 
+            if (Type == TileType.City)
+            {
+                c.a = 0.25f;
+            }
+            if (IsCapital)
+            {
+                c.a = 0.125f;
+            }
+            //TeamShader.GetComponent<SpriteRenderer>().color = new Color(c.r, c.g, c.b, 0.25f);
+
+            TeamShader.GetComponent<SpriteRenderer>().color = c;
         }
     }
 
@@ -81,6 +86,12 @@ public class TileScript : MonoBehaviour
 
     public UnitScript? UnitOnTile;
 
+    private void IncreaseByScale(float scale)
+    {
+        spriteRenderer.sortingOrder = 4;
+        transform.Find("TeamShader").gameObject.GetComponent<SpriteRenderer>().sortingOrder = 5;
+        transform.localScale = new Vector3(scale, scale, 1);
+    }
 
     public void CalculateSprite()
     {
@@ -91,14 +102,17 @@ public class TileScript : MonoBehaviour
                 if (IsCapital)
                 {
                     spriteRenderer.sprite = GetSprite("CapitalTile");
+                    IncreaseByScale(1.3f);
                     break;
                 }
                 if (IsNextToSea)
                 {
                     spriteRenderer.sprite = GetSprite("PortTile");
+                    IncreaseByScale(1.1f);
                     break;
                 }
                 spriteRenderer.sprite = GetSprite("CityTile");
+                IncreaseByScale(1.1f);
                 break;
 
             case TileType.Water:
@@ -165,6 +179,10 @@ public class TileScript : MonoBehaviour
         var Unit = Instantiate(UnitRef, transform.position, new Quaternion()).GetComponent<UnitScript>();
         Unit.Team = Team;
         Unit.TileStandingOn = this;
+
+        Unit.Health = 10;
+        Unit.Morale = 10;
+
 
     }
 

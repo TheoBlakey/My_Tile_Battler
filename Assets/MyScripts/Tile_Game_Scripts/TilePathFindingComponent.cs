@@ -13,8 +13,8 @@ public class TilePathFindingComponent : MonoBehaviour
     }
     private List<TileScript> FullTileList => GameController.FullTileList;
 
-    private readonly int LANDMOVEMENT = 2;
-    private readonly int WATERMOVEMENT = 4;
+    private readonly int LANDMOVEMENT = 4; //2
+    private readonly int WATERMOVEMENT = 6; //4
 
     public enum Direction { N, NE, NW, S, SE, SW }
     public static List<Direction> DirectionList => new((Direction[])Enum.GetValues(typeof(Direction)));

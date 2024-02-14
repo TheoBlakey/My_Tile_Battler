@@ -6,10 +6,10 @@ using UnityEngine;
 
 public class GameControllerScript : MonoBehaviour
 {
-    int playerTurnsLeft = 5;
+    int playerTurnsLeft = 0;
     const int NUMBEROFMOVESPERTURN = 5;
 
-    public bool WaitingForMovementToEnd = false;
+    public bool WaitingForUnitTurnToEnd = false;
 
     public List<Color> ColorList = new()
     {
@@ -38,7 +38,7 @@ public class GameControllerScript : MonoBehaviour
     [SerializeField]
     public Camera camera;
 
-    public bool DisableMouse => WaitingForMovementToEnd || playerTurnsLeft == 0;
+    public bool DisableMouse => WaitingForUnitTurnToEnd || playerTurnsLeft == 0;
 
     private TileScript _st = null;
     public TileScript SelectedTileWithUnit
@@ -80,10 +80,7 @@ public class GameControllerScript : MonoBehaviour
 
 
 
-    void Start()
-    {
 
-    }
 
 
     void Update()
@@ -110,7 +107,7 @@ public class GameControllerScript : MonoBehaviour
             .Where(tile => tile != null)
             .FirstOrDefault();
 
-        if (clickedTile.UnitOnTile != null && clickedTile.UnitOnTile.Team == 1 && !clickedTile.UnitOnTile.MovedThisTurn)
+        if (SelectedTileWithUnit == null && clickedTile.UnitOnTile != null && clickedTile.UnitOnTile.Team == 1 && !clickedTile.UnitOnTile.MovedThisTurn)
         {
             SelectedTileWithUnit = clickedTile;
             return;
@@ -144,8 +141,28 @@ public class GameControllerScript : MonoBehaviour
         HighlightedTiles = PathFindingComponent.FindPath(close, clickedTile);
     }
 
+    void Start()
+    {
+        //StartCoroutine(TURNBASEDGAMESTART());
 
-    IEnumerator MASTERGAMESTART()
+        for (int i = 0; i < TeamList.Count; i++)
+        {
+            yield return StartCoroutine(SynchronousTeamTurns(TeamList[i]));
+
+        }
+    }
+
+    IEnumerator SynchronousTeamTurns(int teamNum)
+    {
+        playerTurnsLeft = NUMBEROFMOVESPERTURN;
+        while (true)
+        {
+            yield return new WaitForSeconds(5);
+            EnemyTurnComponent.PerfromEnemyTeamMove(teamNum);
+        }
+    }
+
+    IEnumerator TURNBASEDGAMESTART()
     {
         int MAXGAMETURNS = 1000;
 
@@ -158,15 +175,13 @@ public class GameControllerScript : MonoBehaviour
 
         }
 
-        yield return null;
-
     }
 
-
+    bool unitsAvailable => FindObjectsOfType<UnitScript>().Where(u => u.Team == 1 && u.MovedThisTurn == false).Count() > 0;
     IEnumerator PerformPlayerTurn()
     {
         playerTurnsLeft = NUMBEROFMOVESPERTURN;
-        while (playerTurnsLeft != 0 || WaitingForMovementToEnd)
+        while (unitsAvailable && (playerTurnsLeft != 0 || WaitingForUnitTurnToEnd))
         {
             yield return null;
         }
@@ -180,6 +195,7 @@ public class GameControllerScript : MonoBehaviour
 
         teamCities.ForEach(c => c.PerformCityTurn());
 
+        print("TEAM TURN : " + teamNum);
         if (teamNum == 1)
         {
             yield return StartCoroutine(PerformPlayerTurn());
@@ -188,11 +204,15 @@ public class GameControllerScript : MonoBehaviour
         {
             for (int i = 0; i < NUMBEROFMOVESPERTURN; i++)
             {
-                while (WaitingForMovementToEnd)
+                while (WaitingForUnitTurnToEnd)
                 {
                     yield return null;
                 }
-                EnemyTurnComponent.PerfromEnemyTeamMove(teamNum);
+                bool actuallyMoved = EnemyTurnComponent.PerfromEnemyTeamMove(teamNum);
+                if (!actuallyMoved)
+                {
+                    i++;
+                }
             }
         }
 

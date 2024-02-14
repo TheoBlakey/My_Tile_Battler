@@ -13,7 +13,7 @@ public class HexTileBoardGenerator : MonoBehaviour
     [SerializeField]
     private int MapSize = 70, PlayerNumber = 4;
 
-    private int AverageIslandSize => MapSize / 7;
+    private int AverageIslandSize => MapSize / 5;
 
     public GameObject _hexTileRefFromPath;
     public GameObject HexTileRefFromPath
@@ -48,7 +48,7 @@ public class HexTileBoardGenerator : MonoBehaviour
         startTime = DateTime.Now;
         ClearMap();
 
-        List<Vector2Int> LandCoordinates = LandGeneratorAlgorithm.GenerateLandCoordinates(MapSize, MapSize / 5).ToList();
+        List<Vector2Int> LandCoordinates = LandGeneratorAlgorithm.GenerateLandCoordinates(MapSize, AverageIslandSize).ToList();
 
         PrintTime("After LandAlogrithms"); //145
 
@@ -77,9 +77,15 @@ public class HexTileBoardGenerator : MonoBehaviour
         TileScript furthestCity = FindFurthestCity(landCities, landCities);
         List<TileScript> teamCities = new() { furthestCity };
 
+
+        float averageDistance = landCities.SelectMany(city1 =>
+                  landCities.Where(city2 => city1 != city2)
+                  .Select(city2 => Vector3.Distance(city1.transform.position, city2.transform.position)))
+                  .Average();
+
         for (int i = 0; i < PlayerNumber - 1; i++)
         {
-            teamCities.Add(FindFurthestCity(landCities, teamCities));
+            teamCities.Add(FindFurthestCityNotTooClose(landCities, teamCities, averageDistance));
         }
 
         teamCities = teamCities.OrderBy(x => UnityEngine.Random.value).ToList(); //shuffle
@@ -147,6 +153,47 @@ public class HexTileBoardGenerator : MonoBehaviour
 
         return furthestCity;
     }
+
+    static TileScript FindFurthestCityNotTooClose(List<TileScript> landCities, List<TileScript> teamCities, float averageDistance)
+    {
+        var tempLandCities = landCities.ToList();
+        var tempTeamCities = teamCities.ToList();
+
+        TileScript furthestCity = null;
+
+        int whileSkipper = 0;
+        while (true && whileSkipper < 8)
+        {
+            whileSkipper++;
+
+            furthestCity = FindFurthestCity(tempLandCities, tempTeamCities);
+
+
+            tempTeamCities.Add(furthestCity);
+            bool notTooClose = teamCities.All(city => teamCities.Where(otherCity => otherCity != city)
+                                       .All(otherCity => Vector2.Distance(city.transform.position, otherCity.transform.position) >= averageDistance));
+
+
+            if (notTooClose)
+            {
+                break;
+            }
+
+            tempTeamCities.Remove(furthestCity);
+            tempLandCities.Remove(furthestCity);
+        }
+
+        return furthestCity;
+    }
+
+    //public TileScript LeastCloseCity(List<TileScript> cities1, List<TileScript> cities2)
+    //{
+    //    var otherCities = cities1.Except(cities2).ToList();
+
+    //    return otherCities
+    //        .OrderBy(city1 => cities2.Max(city2 => Vector2.Distance(city1.transform.position, city2.transform.position)))
+    //        .Last();
+    //}
 
     private List<TileScript> ChooseSpacedCities(int numberOfCites, List<TileScript> grassTiles, bool shouldBeNextToSea, List<TileScript> startingCityList = null)
     {

@@ -1,24 +1,19 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
+using UnityEditor;
 using UnityEngine;
 
 public class UnitScript : MonoBehaviour
 {
     Color ogColor;
     SpriteRenderer spriteRenderer => GetComponent<SpriteRenderer>();
+    SpriteRenderer teamShaderSpriteRenderer => transform.Find("TeamShader").gameObject.GetComponent<SpriteRenderer>();
+    TextMeshPro HealthText => transform.Find("Text").gameObject.GetComponent<TextMeshPro>();
 
-    private TileScript _ctt = null;
-    TileScript CurrentlyTravellingTo
-    {
-        get => _ctt;
-        set
-        {
-            _ctt = value;
-            bool CurrentlyTravelling = value != null;
-            GameController.WaitingForMovementToEnd = CurrentlyTravelling;
-        }
-    }
+    TileScript CurrentlyTravellingTo = null;
+    bool TurnHasEnded = false;
 
     public GameControllerScript _gc = null;
     public GameControllerScript GameController
@@ -27,8 +22,71 @@ public class UnitScript : MonoBehaviour
     }
     List<Color> UnitColorList => GameController.ColorList.Select(c => new Color(c.r, c.g, c.b, 0.5f)).ToList();
 
-    public int Health = 10;
-    public int Morale = 10;
+
+
+    public int _m = 10;
+    public int Morale
+    {
+        get => _m;
+        set
+        {
+            _m = System.Math.Min(100, Health);
+            CaculateText();
+        }
+    }
+
+    private int _h = 10;
+    public int Health
+    {
+        get => _h;
+        set
+        {
+            _h = System.Math.Min(100, value);
+            if (TileStandingOn.Type != TileScript.TileType.Water)
+            {
+                CalculateSprite();
+            }
+            CaculateText();
+        }
+    }
+    void CalculateSprite(bool IsBoat = false)
+    {
+        Sprite sprite = (IsBoat || TileStandingOn.Type == TileScript.TileType.Water) ?
+            GetSprite("boat")
+            : SpriteLevels();
+
+        spriteRenderer.sprite = sprite;
+        teamShaderSpriteRenderer.sprite = sprite;
+    }
+
+    void CaculateText()
+    {
+        HealthText.text = Morale + "/" +
+            "<br>" + "   /" + Health;
+    }
+    void ToggleTextOnOff(bool On)
+    {
+        Color tempColor = HealthText.color;
+        tempColor.a = On ? 1 : 0;
+        HealthText.color = tempColor;
+    }
+
+    public Sprite SpriteLevels() =>
+    Health switch
+    {
+        var h when h < 33 => GetSprite("light_unit"),
+        var h when h >= 33 && h <= 66 => GetSprite("mid_unit"),
+        var h when h > 66 => GetSprite("heavy_unit"),
+        _ => null
+    };
+
+    private Sprite GetSprite(string spriteName)
+    {
+        string path = "Assets/Art/Hex_Units/" + spriteName + ".png";
+        return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+    }
+
+
 
     private int _t;
     public int Team
@@ -37,7 +95,7 @@ public class UnitScript : MonoBehaviour
         set
         {
             _t = value;
-            transform.Find("TeamShader").gameObject.GetComponent<SpriteRenderer>().color = UnitColorList[value];
+            teamShaderSpriteRenderer.color = UnitColorList[value];
             //spriteRenderer.color = UnitColorList[Team];
         }
     }
@@ -57,7 +115,8 @@ public class UnitScript : MonoBehaviour
             _ts = value;
 
             value.UnitOnTile = this;
-            if (value.Team != Team)
+
+            if (value.Team != Team && value.Type != TileScript.TileType.Water)
             {
                 value.Team = Team;
                 value.IsCapital = false;
@@ -68,13 +127,18 @@ public class UnitScript : MonoBehaviour
     }
 
 
-    private bool _mt = false;
+    public bool _mt = false;
     public bool MovedThisTurn
     {
         get => _mt;
         set
         {
             _mt = value;
+            //ogColor = (ogColor == Color.white) ? spriteRenderer.color : ogColor;
+            //spriteRenderer.color = value ? Color.black : ogColor;
+            ////ogColor = value ? ogColor : spriteRenderer.color;
+            //print("VALUE IS" + value);
+
             if (value)
             {
                 ogColor = spriteRenderer.color;
@@ -85,6 +149,8 @@ public class UnitScript : MonoBehaviour
             {
                 spriteRenderer.color = ogColor;
             }
+
+
         }
     }
 
@@ -95,7 +161,13 @@ public class UnitScript : MonoBehaviour
 
     IEnumerator MoveToOrAttackTileCoroutine(TileScript tileToMoveTo)
     {
+        GameController.WaitingForUnitTurnToEnd = true;
         CurrentlyTravellingTo = tileToMoveTo;
+
+        if (CurrentlyTravellingTo.Type == TileScript.TileType.Water)
+        {
+            CalculateSprite(true);
+        }
 
         while (CurrentlyTravellingTo != null)
         {
@@ -103,12 +175,30 @@ public class UnitScript : MonoBehaviour
         }
 
         PerformMergeOrAttack(tileToMoveTo);
+        TurnHasEnded = true;
     }
 
-    private void FixedUpdate()
+    void OnDestroy()
+    {
+        CheckIfEndturn();
+    }
+    private void Update()
+    {
+        CheckIfEndturn();
+    }
+
+    void CheckIfEndturn()
+    {
+        if (TurnHasEnded)
+        {
+            GameController.WaitingForUnitTurnToEnd = false;
+            TurnHasEnded = false;
+        }
+    }
+
+    private void FixedUpdate() //travelling update
     {
         if (CurrentlyTravellingTo == null) { return; }
-        print("moving!!");
 
         if (Vector2.Distance(transform.position, CurrentlyTravellingTo.transform.position) < 0.01f)
         {
@@ -116,76 +206,67 @@ public class UnitScript : MonoBehaviour
         }
         if (CurrentlyTravellingTo.transform.position == this.transform.position)
         {
-            print("MADE IT!");
             CurrentlyTravellingTo = null;
             return;
         }
-
 
         float moveSpeed = 1f;
         Vector3 direction = CurrentlyTravellingTo.transform.position - transform.position;
         direction.Normalize();
         this.transform.position += direction * moveSpeed * Time.fixedDeltaTime;
-
     }
 
-    // Start is called before the first frame update
-    void Start()
-    {
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
 
     void PerformMergeOrAttack(TileScript desination)
     {
 
         UnitScript desinationUnit = desination.UnitOnTile;
-        bool survived = true;
 
-        if (desinationUnit != null)
+        if (desinationUnit != null && desinationUnit != this)
         {
             if (desinationUnit.Team == Team)
             {
                 Health += desinationUnit.Health;
-                Destroy(desinationUnit);
+                Destroy(desinationUnit.gameObject);
+
             }
             else
             {
                 (int thisHealth, int enemyHealth) = OutComeOfBattle(this, desinationUnit);
                 if (thisHealth <= 0)
                 {
-                    survived = false;
                     desinationUnit.Health = enemyHealth;
-                    Destroy(this);
+                    Destroy(this.gameObject);
+                    return;
                 }
                 else
                 {
                     Health = thisHealth;
-                    Destroy(desinationUnit);
+                    Destroy(desinationUnit.gameObject);
+
                 }
 
             }
         }
 
-        if (survived)
-        {
-            //MovedThisTurn = true;
-            TileStandingOn = desination;
-            CaputreSurroundingTiles();
-        }
-
+        TileStandingOn = desination;
+        CaputreSurroundingTiles();
+        MovedThisTurn = true;
+        CalculateSprite();
     }
 
     void CaputreSurroundingTiles()
     {
+        if (TileStandingOn.Type == TileScript.TileType.Water)
+        {
+            return;
+        }
+
         List<TileScript> tilesToCapture = GameController.PathFindingComponent.GetAllNeighboursToADistance(TileStandingOn, 2, false);
-        tilesToCapture.ForEach(t => t.Team = Team);
-        //TileStandingOn.Team = Team;
+        tilesToCapture
+              .Where(t => t.UnitOnTile == null)
+              .ToList() // Convert to a list to avoid null reference issues
+              .ForEach(t => t.Team = Team);
     }
 
     (int, int) OutComeOfBattle(UnitScript unit1, UnitScript unit2)
@@ -224,4 +305,9 @@ public class UnitScript : MonoBehaviour
 
         return 1 / (unit2Health);
     }
+
+    //public void Start()
+    //{
+    //    CaculateText();
+    //}
 }
