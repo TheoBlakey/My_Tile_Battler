@@ -11,15 +11,16 @@ public class EnemyTurnComponent : MonoBehaviour
         get => _gc != null ? _gc : _gc = GetComponent<GameControllerScript>();
     }
 
-    public bool PerfromEnemyTeamMove(int Team)
+    public void PerfromEnemyTeamMove(int Team, UnitScript soloUnit = null)
     {
         List<TileScript> AllFriendlyCities = GameController.AllCities.Where(c => c.Team == Team).ToList();
         List<TileScript> AllNonFriendlyCities = GameController.AllCities.Where(c => c.Team != Team).ToList();
 
-        List<UnitScript> ALLUNITS = FindObjectsOfType<UnitScript>().ToList();
+        List<UnitScript> ALLUNITS = FindObjectsOfType<UnitScript>().Where(u => u.TileStandingOn != null).ToList();
 
         List<UnitScript> AllTeamUnitsReady = ALLUNITS.Where(u => u.Team == Team && !u.MovedThisTurn).ToList();
-        if (AllTeamUnitsReady.Count == 0) { return true; }
+        if (soloUnit != null) { AllTeamUnitsReady = new List<UnitScript> { soloUnit }; };
+        if (AllTeamUnitsReady.Count == 0) { return; }
 
         List<UnitScript> AllEnemyUnits = ALLUNITS.Where(u => u.Team != Team).ToList();
         List<TileScript> AllTilesWithNonFriendlyUnits = AllEnemyUnits.Select(s => s.TileStandingOn).ToList();
@@ -60,21 +61,23 @@ public class EnemyTurnComponent : MonoBehaviour
                               };
         //possibleMoves.AddRange(attackUnitMoves);
 
-        PossibleMove bestMove = possibleMoves
-            .OrderByDescending(m => m.Desire) // decending!!!!!!
-            .FirstOrDefault();
+        var orderedPossibleMoves = possibleMoves
+            .OrderByDescending(m => m.Desire); // decending!!!!!!
 
-        if (bestMove.UnitMoving.TileStandingOn == bestMove.LocationOfMovement)
+
+        PossibleMove bestMove = orderedPossibleMoves.FirstOrDefault();
+
+        while (bestMove != null && bestMove.UnitMoving.TileStandingOn == bestMove.LocationOfMovement)
         {
-            bestMove.UnitMoving.MovedThisTurn = true;
-            return false;
+            possibleMoves = possibleMoves.Where(m => m.UnitMoving != bestMove.UnitMoving).ToList();
+            bestMove = orderedPossibleMoves.FirstOrDefault();
         }
 
-        //var paths = GameController.PathFindingComponent.FindPath(bestMove.UnitMoving.TileStandingOn, bestMove.LocationOfMovement);
-        TileScript firstMove = GameController.PathFindingComponent.FindPath(bestMove.UnitMoving.TileStandingOn, bestMove.LocationOfMovement).Last();
+        if (bestMove == null) { return; }
 
+        TileScript firstMove = GameController.PathFindingComponent.FindPath(bestMove.UnitMoving.TileStandingOn, bestMove.LocationOfMovement).Last();
         bestMove.UnitMoving.MoveToOrAttackTile(firstMove);
-        return true;
+
     }
 
 
@@ -107,6 +110,10 @@ public class EnemyTurnComponent : MonoBehaviour
                 case TypeOfMove.CaptureCity:
 
                     calcDesire = UnitMoving.ChanceToWInBattle(LocationOfMovement) / (Distance(UnitMoving) * 2);
+                    if (LocationOfMovement.IsNextToSea)
+                    {
+                        calcDesire /= 2;
+                    }
                     if (LocationOfMovement.IsCapital)
                     {
                         calcDesire *= CAPTIALTAKEMULTIPLIER;

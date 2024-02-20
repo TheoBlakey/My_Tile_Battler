@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -53,6 +54,7 @@ public class TileScript : MonoBehaviour
             if (Type == TileType.City)
             {
                 c.a = 0.25f;
+                //c.a = 0.75f;
             }
             if (IsCapital)
             {
@@ -160,7 +162,7 @@ public class TileScript : MonoBehaviour
 
 
 
-    public void PerformCityTurn()
+    public void PerformCityTurn(int amountIncrease = 10)
     {
 
         if (Type != TileType.City || IsNextToSea || Team == 0)
@@ -170,20 +172,58 @@ public class TileScript : MonoBehaviour
 
         if (UnitOnTile != null)
         {
-            UnitOnTile.Health += 10;
-            UnitOnTile.Morale += 10;
+            UnitOnTile.Health += amountIncrease;
+            UnitOnTile.Morale += amountIncrease;
             return;
         }
-
 
         var Unit = Instantiate(UnitRef, transform.position, new Quaternion()).GetComponent<UnitScript>();
         Unit.Team = Team;
         Unit.TileStandingOn = this;
 
-        Unit.Health = 10;
-        Unit.Morale = 10;
+        Unit.Health = amountIncrease;
+        Unit.Morale = amountIncrease;
+
+        if (GameController.AsyncGame && Team != 1)
+        {
+            Unit.StartAsyncGameturn();
+        }
 
 
     }
+
+    public void StartAsyncGameturn()
+    {
+        StartCoroutine(PerformAsyncGameTurn());
+    }
+
+    public IEnumerator PerformAsyncGameTurn()
+    {
+        int turnsWithoutUnit = 0;
+        while (true)
+        {
+            yield return new WaitForSeconds(GameController.CityRateOfCreation);
+
+            if (Team == 0) { continue; }
+
+
+            if (UnitOnTile != null)
+            {
+                PerformCityTurn(1);
+                turnsWithoutUnit = 0;
+            }
+            else if (turnsWithoutUnit < 10)
+            {
+                turnsWithoutUnit++;
+            }
+            else
+            {
+                PerformCityTurn();
+                turnsWithoutUnit = 0;
+            }
+        }
+
+    }
+
 
 }

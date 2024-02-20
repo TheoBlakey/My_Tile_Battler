@@ -21,6 +21,7 @@ public class UnitScript : MonoBehaviour
         get => _gc != null ? _gc : _gc = FindObjectsOfType<GameControllerScript>().FirstOrDefault().GetComponent<GameControllerScript>();
     }
     List<Color> UnitColorList => GameController.ColorList.Select(c => new Color(c.r, c.g, c.b, 0.5f)).ToList();
+    bool AsyncUnitContinue = true;
 
 
 
@@ -54,7 +55,6 @@ public class UnitScript : MonoBehaviour
         Sprite sprite = (IsBoat || TileStandingOn.Type == TileScript.TileType.Water) ?
             GetSprite("boat")
             : SpriteLevels();
-
         spriteRenderer.sprite = sprite;
         teamShaderSpriteRenderer.sprite = sprite;
     }
@@ -75,8 +75,8 @@ public class UnitScript : MonoBehaviour
     Health switch
     {
         var h when h < 33 => GetSprite("light_unit"),
-        var h when h >= 33 && h <= 66 => GetSprite("mid_unit"),
-        var h when h > 66 => GetSprite("heavy_unit"),
+        var h when h >= 33 && h <= 66 => GetSprite("heavy_unit"), //"mid_unit"
+        var h when h > 66 => GetSprite("elephant_unit"),
         _ => null
     };
 
@@ -85,8 +85,6 @@ public class UnitScript : MonoBehaviour
         string path = "Assets/Art/Hex_Units/" + spriteName + ".png";
         return AssetDatabase.LoadAssetAtPath<Sprite>(path);
     }
-
-
 
     private int _t;
     public int Team
@@ -107,12 +105,14 @@ public class UnitScript : MonoBehaviour
         get => _ts;
         set
         {
-            if (_ts != null && _ts.UnitOnTile != null)
+            if (_ts != null)
             {
                 _ts.UnitOnTile = null;
             }
 
             _ts = value;
+
+            if (value == null) { return; }
 
             value.UnitOnTile = this;
 
@@ -122,7 +122,6 @@ public class UnitScript : MonoBehaviour
                 value.IsCapital = false;
             }
 
-            //transform.position = value.transform.position;  OLLDDDDDDDDD
         }
     }
 
@@ -162,7 +161,9 @@ public class UnitScript : MonoBehaviour
     IEnumerator MoveToOrAttackTileCoroutine(TileScript tileToMoveTo)
     {
         GameController.WaitingForUnitTurnToEnd = true;
+        GameController.WaitingForUnitTeams.Add(Team);
         CurrentlyTravellingTo = tileToMoveTo;
+        TileStandingOn = null;
 
         if (CurrentlyTravellingTo.Type == TileScript.TileType.Water)
         {
@@ -192,8 +193,20 @@ public class UnitScript : MonoBehaviour
         if (TurnHasEnded)
         {
             GameController.WaitingForUnitTurnToEnd = false;
+            GameController.WaitingForUnitTeams.Remove(Team);
             TurnHasEnded = false;
+
+            if (GameController.AsyncGame)
+            {
+                StartCoroutine(UnitMovementPause());
+            }
         }
+    }
+    IEnumerator UnitMovementPause()
+    {
+        yield return new WaitForSeconds(GameController.UnitMovedPause);
+        AsyncUnitContinue = true;
+        MovedThisTurn = false;
     }
 
     private void FixedUpdate() //travelling update
@@ -306,8 +319,18 @@ public class UnitScript : MonoBehaviour
         return 1 / (unit2Health);
     }
 
-    //public void Start()
+    public void StartAsyncGameturn()
+    {
+        //StartCoroutine(PerformAsyncGameTurn());
+    }
+
+    //public IEnumerator PerformAsyncGameTurn()
     //{
-    //    CaculateText();
+    //    while (true)
+    //    {
+    //        while (!AsyncUnitContinue) { yield return null; }
+    //        AsyncUnitContinue = false;
+    //        GameController.EnemyTurnComponent.PerfromEnemyTeamMove(Team, this);
+    //    }
     //}
 }

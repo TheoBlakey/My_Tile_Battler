@@ -6,10 +6,16 @@ using UnityEngine;
 
 public class GameControllerScript : MonoBehaviour
 {
+    public bool AsyncGame = true;
+    public int TeamPlayerPause = 2;
+    public int CityRateOfCreation => Random.Range(1, 1);
+    public int UnitMovedPause = 2;
+
     int playerTurnsLeft = 0;
     const int NUMBEROFMOVESPERTURN = 5;
 
     public bool WaitingForUnitTurnToEnd = false;
+    public List<int> WaitingForUnitTeams = new();
 
     public List<Color> ColorList = new()
     {
@@ -38,7 +44,7 @@ public class GameControllerScript : MonoBehaviour
     [SerializeField]
     public Camera camera;
 
-    public bool DisableMouse => WaitingForUnitTurnToEnd || playerTurnsLeft == 0;
+    public bool DisableMouse => (WaitingForUnitTurnToEnd || playerTurnsLeft == 0) && !AsyncGame;
 
     private TileScript _st = null;
     public TileScript SelectedTileWithUnit
@@ -78,17 +84,11 @@ public class GameControllerScript : MonoBehaviour
 
 
 
-
-
-
-
-
     void Update()
     {
-        if (DisableMouse) { return; }
+        CheckSelectedUnitNotDestoryed();
 
-
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0) && !DisableMouse)
         {
             PerformTileSelection();
         }
@@ -128,40 +128,52 @@ public class GameControllerScript : MonoBehaviour
         SelectedTileWithUnit = null;
 
     }
+    void CheckSelectedUnitNotDestoryed()
+    {
+        if (SelectedTileWithUnit != null && SelectedTileWithUnit.UnitOnTile != null && SelectedTileWithUnit.UnitOnTile.Team == 1 && SelectedTileWithUnit.UnitOnTile.MovedThisTurn == false)
+        {
+            return;
+        }
+
+        SelectedTileWithUnit = null;
+    }
 
     private void PathfindingTest(TileScript clickedTile)
     {
-        //var team1cap = FindObjectsOfType<TileScript>().Where(tag => tag.Team == 1).FirstOrDefault();
-
-
         var close = AllCities.OrderBy(c => PathFindingComponent.GetRayCastApproxDistance(clickedTile.transform, c.transform)).FirstOrDefault();
-        //print(close.GridLocation);
-
-        //HighlightedTiles = new List<TileScript>() { close };
         HighlightedTiles = PathFindingComponent.FindPath(close, clickedTile);
     }
 
     void Start()
     {
-        //StartCoroutine(TURNBASEDGAMESTART());
-
-        for (int i = 0; i < TeamList.Count; i++)
+        if (!AsyncGame)
         {
-            yield return StartCoroutine(SynchronousTeamTurns(TeamList[i]));
+            StartCoroutine(TURNBASEDGAMESTART());
+            return;
+        }
+
+        AllCities.ForEach(c => c.StartAsyncGameturn());
+        for (int i = 1; i < TeamList.Count; i++)
+        {
+            StartCoroutine(AsyncTeamTurns(TeamList[i]));
 
         }
+
     }
 
-    IEnumerator SynchronousTeamTurns(int teamNum)
+    IEnumerator AsyncTeamTurns(int teamNum)
     {
-        playerTurnsLeft = NUMBEROFMOVESPERTURN;
         while (true)
         {
-            yield return new WaitForSeconds(5);
+            yield return new WaitForSeconds(TeamPlayerPause);
+            while (WaitingForUnitTeams.Contains(teamNum))
+            {
+                yield return null;
+            }
             EnemyTurnComponent.PerfromEnemyTeamMove(teamNum);
         }
     }
-
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////
     IEnumerator TURNBASEDGAMESTART()
     {
         int MAXGAMETURNS = 1000;
@@ -208,11 +220,13 @@ public class GameControllerScript : MonoBehaviour
                 {
                     yield return null;
                 }
-                bool actuallyMoved = EnemyTurnComponent.PerfromEnemyTeamMove(teamNum);
-                if (!actuallyMoved)
-                {
-                    i++;
-                }
+                EnemyTurnComponent.PerfromEnemyTeamMove(teamNum);
+
+                //bool actuallyMoved = EnemyTurnComponent.PerfromEnemyTeamMove(teamNum);
+                //if (!actuallyMoved)
+                //{
+                //    i++;
+                //}
             }
         }
 
