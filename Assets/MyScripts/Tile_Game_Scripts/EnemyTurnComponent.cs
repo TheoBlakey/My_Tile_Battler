@@ -81,7 +81,7 @@ public class EnemyTurnComponent : MonoBehaviour
     }
 
 
-    public enum TypeOfMove { CaptureCity, DefendCity, DestroyUnit }
+    public enum TypeOfMove { CaptureCity, DefendCity, DestroyUnit, HealUnit, CombineUnits }
 
     public class PossibleMove
     {

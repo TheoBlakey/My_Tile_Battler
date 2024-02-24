@@ -2,12 +2,16 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
 public class UnitScript : MonoBehaviour
 {
     Color ogColor;
+
+    public GameObject FightEffect_Ref => AssetDatabase.LoadAssetAtPath<UnityEngine.Object>("Assets/Objects/Fight_Effect.prefab").GameObject();
+
     SpriteRenderer spriteRenderer => GetComponent<SpriteRenderer>();
     SpriteRenderer teamShaderSpriteRenderer => transform.Find("TeamShader").gameObject.GetComponent<SpriteRenderer>();
     TextMeshPro HealthText => transform.Find("Text").gameObject.GetComponent<TextMeshPro>();
@@ -235,31 +239,35 @@ public class UnitScript : MonoBehaviour
 
         UnitScript desinationUnit = desination.UnitOnTile;
 
+        bool isEnemyUnitOnTile = desinationUnit != null && desinationUnit.Team != Team;
+
         if (desinationUnit != null && desinationUnit != this)
         {
-            if (desinationUnit.Team == Team)
-            {
-                Health += desinationUnit.Health;
-                Destroy(desinationUnit.gameObject);
-
-            }
-            else
+            if (isEnemyUnitOnTile)
             {
                 (int thisHealth, int enemyHealth) = OutComeOfBattle(this, desinationUnit);
                 if (thisHealth <= 0)
-                {
+                {   //lose
                     desinationUnit.Health = enemyHealth;
                     Destroy(this.gameObject);
                     return;
                 }
                 else
-                {
+                {   //win
                     Health = thisHealth;
                     Destroy(desinationUnit.gameObject);
-
                 }
-
             }
+            else
+            {
+                Health += desinationUnit.Health;
+                Destroy(desinationUnit.gameObject);
+            }
+        }
+
+        if (isEnemyUnitOnTile || (desination.Type == TileScript.TileType.City && desination.Team != Team))
+        {
+            Instantiate(FightEffect_Ref, transform.position, new Quaternion()).GetComponent<UnitScript>();
         }
 
         TileStandingOn = desination;

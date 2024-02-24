@@ -11,9 +11,9 @@ public class HexTileBoardGenerator : MonoBehaviour
     //og MapSize = 70;
 
     [SerializeField]
-    private int MapSize = 70, PlayerNumber = 4;
+    private int MapSize = 70, PlayerNumber = 4, AverageIslandSize = 5;
 
-    private int AverageIslandSize => MapSize / 5;
+    //private int AverageIslandSize => MapSize / 5;
 
     public GameObject _hexTileRefFromPath;
     public GameObject HexTileRefFromPath
@@ -139,9 +139,10 @@ public class HexTileBoardGenerator : MonoBehaviour
 
     static TileScript FindFurthestCity(List<TileScript> cities1, List<TileScript> cities2, int fractionToChooseFrom = 10)
     {
-        ////take top perctage of list
         List<TileScript> citiesByDistance = cities1
            .OrderByDescending(city1 => cities2.Sum(city2 => Vector2.Distance(city1.transform.position, city2.transform.position))).ToList();
+
+        //return citiesByDistance.First(); //this for no randomness
 
         int fraction = citiesByDistance.Count / fractionToChooseFrom;
 
