@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class AnimationAutoDestroy : MonoBehaviour
+public class AnimationAutoDestroyComponent : MonoBehaviour
 {
     public float delay = 0f;
 

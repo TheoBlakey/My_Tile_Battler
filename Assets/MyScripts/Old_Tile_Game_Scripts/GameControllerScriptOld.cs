@@ -4,10 +4,10 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-public class GameControllerScript : MonoBehaviour
+public class GameControllerScriptOld : MonoBehaviour
 {
     public bool AsyncGame = true;
-    public int TeamPlayerPause = 2;
+    public float TeamPlayerPause = 5;
     public int CityRateOfCreation => Random.Range(1, 1);
     public int UnitMovedPause = 2;
 
@@ -69,10 +69,10 @@ public class GameControllerScript : MonoBehaviour
     }
 
 
-    private TilePathFindingComponent _pf = null;
-    public TilePathFindingComponent PathFindingComponent
+    private TilePathFindingComponentOld _pf = null;
+    public TilePathFindingComponentOld PathFindingComponent
     {
-        get => _pf != null ? _pf : _pf = gameObject.AddComponent<TilePathFindingComponent>();
+        get => _pf != null ? _pf : _pf = gameObject.AddComponent<TilePathFindingComponentOld>();
     }
 
     private EnemyTurnComponent _etc = null;
@@ -107,7 +107,7 @@ public class GameControllerScript : MonoBehaviour
             .Where(tile => tile != null)
             .FirstOrDefault();
 
-        if (SelectedTileWithUnit == null && clickedTile.UnitOnTile != null && clickedTile.UnitOnTile.Team == 1 && !clickedTile.UnitOnTile.MovedThisTurn)
+        if (SelectedTileWithUnit == null && clickedTile.UnitOnTile != null && clickedTile.UnitOnTile.Team == 1 && !clickedTile.UnitOnTile.ShadedOut)
         {
             SelectedTileWithUnit = clickedTile;
             return;
@@ -118,7 +118,7 @@ public class GameControllerScript : MonoBehaviour
             SelectedTileWithUnit.UnitOnTile.MoveToOrAttackTile(clickedTile);
             playerTurnsLeft--;
 
-            List<UnitScript> moreUnitsToMove = FindObjectsOfType<UnitScript>().Where(u => u.Team == 1 && !u.MovedThisTurn).ToList();
+            List<UnitScriptOld> moreUnitsToMove = FindObjectsOfType<UnitScriptOld>().Where(u => u.Team == 1 && !u.MovedThisTurn_Not_Used).ToList();
             if (moreUnitsToMove.Count == 0)
             {
                 playerTurnsLeft = 0;
@@ -130,7 +130,7 @@ public class GameControllerScript : MonoBehaviour
     }
     void CheckSelectedUnitNotDestoryed()
     {
-        if (SelectedTileWithUnit != null && SelectedTileWithUnit.UnitOnTile != null && SelectedTileWithUnit.UnitOnTile.Team == 1 && SelectedTileWithUnit.UnitOnTile.MovedThisTurn == false)
+        if (SelectedTileWithUnit != null && SelectedTileWithUnit.UnitOnTile != null && SelectedTileWithUnit.UnitOnTile.Team == 1 && SelectedTileWithUnit.UnitOnTile.ShadedOut == false)
         {
             return;
         }
@@ -165,7 +165,7 @@ public class GameControllerScript : MonoBehaviour
     {
         while (true)
         {
-            yield return new WaitForSeconds(TeamPlayerPause);
+            yield return new WaitForSeconds(2);
             while (WaitingForUnitTeams.Contains(teamNum))
             {
                 yield return null;
@@ -189,7 +189,7 @@ public class GameControllerScript : MonoBehaviour
 
     }
 
-    bool unitsAvailable => FindObjectsOfType<UnitScript>().Where(u => u.Team == 1 && u.MovedThisTurn == false).Count() > 0;
+    bool unitsAvailable => FindObjectsOfType<UnitScriptOld>().Where(u => u.Team == 1 && u.MovedThisTurn_Not_Used == false).Count() > 0;
     IEnumerator PerformPlayerTurn()
     {
         playerTurnsLeft = NUMBEROFMOVESPERTURN;
@@ -230,10 +230,10 @@ public class GameControllerScript : MonoBehaviour
             }
         }
 
-        List<UnitScript> unitsForTeam = FindObjectsOfType<UnitScript>().Where(u => u.Team == teamNum).ToList();
+        List<UnitScriptOld> unitsForTeam = FindObjectsOfType<UnitScriptOld>().Where(u => u.Team == teamNum).ToList();
         unitsForTeam.ForEach(u =>
         {
-            u.MovedThisTurn = false;
+            u.MovedThisTurn_Not_Used = false;
         });
 
     }

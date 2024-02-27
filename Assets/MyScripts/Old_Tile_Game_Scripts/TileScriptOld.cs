@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting;
@@ -6,23 +7,26 @@ using UnityEditor;
 using UnityEngine;
 
 [Serializable()]
-public class TileScript : MonoBehaviour
+public class TileScriptOld : MonoBehaviour
 {
     public GameObject UnitRef => AssetDatabase.LoadAssetAtPath<UnityEngine.Object>("Assets/Objects/Unit.prefab").GameObject();
 
+
+    [SerializeField]
     SpriteRenderer spriteRenderer => GetComponent<SpriteRenderer>();
-    public List<TileScript> Neighbours;
-    TilePathFindingComponent _pathFindingComponent;
 
-    bool IsSuitableForBuilding = false;
-    void Start()
+    [SerializeField]
+    public GameControllerScriptOld _gc = null;
+    public GameControllerScriptOld GameController
     {
-        _pathFindingComponent = this.AddComponent<TilePathFindingComponent>();
-        Neighbours = _pathFindingComponent.GetallTileNeighbours(this);
-
-        IsSuitableForBuilding = !IsNextToSea && !(Type != TileType.City) && Neighbours.Any(n => n.Type == TileType.City);
+        get => _gc != null ? _gc : _gc = FindObjectsOfType<GameControllerScriptOld>().FirstOrDefault().GetComponent<GameControllerScriptOld>();
     }
 
+    public List<TileScript> _n;
+    public List<TileScript> Neighbours
+    {
+        get => _n.Any() ? _n : _n = GameController.PathFindingComponent.GetallTileNeighbours(this);
+    }
 
     [SerializeField]
     public bool IsCapital = false;
@@ -30,11 +34,11 @@ public class TileScript : MonoBehaviour
     [SerializeField]
     public Vector2Int GridLocation;
 
-    List<Color> TileColorList => Constants.ColorList.Select(c => new Color(c.r, c.g, c.b, 0.5f)).ToList();
+    List<Color> TileColorList => GameController.ColorList.Select(c => new Color(c.r, c.g, c.b, 0.5f)).ToList();
 
 
     [SerializeField]
-    private GameObject TeamShader => transform.Find("TeamShader").gameObject;
+    private GameObject TeamShader;
 
     [SerializeField]
     public int _t;
@@ -43,10 +47,8 @@ public class TileScript : MonoBehaviour
         get => _t;
         set
         {
-            if (value == _t) return;
-
             _t = value;
-
+            TeamShader = TeamShader != null ? TeamShader : transform.Find("TeamShader").gameObject;
             Color c = TileColorList[value];
 
             if (Type == TileType.City)
@@ -58,19 +60,9 @@ public class TileScript : MonoBehaviour
             {
                 c.a = 0.125f;
             }
+            //TeamShader.GetComponent<SpriteRenderer>().color = new Color(c.r, c.g, c.b, 0.25f);
 
             TeamShader.GetComponent<SpriteRenderer>().color = c;
-
-            if (TryGetComponent<CityComponent>(out var city))
-            {
-                Destroy(city);
-            }
-
-            if (_t != 0 || _t != 5)
-            {
-                var teamCity = this.AddComponent<CityComponent>();
-                teamCity.Team = Team;
-            }
         }
     }
 
@@ -85,8 +77,6 @@ public class TileScript : MonoBehaviour
         }
     }
 
-
-
     public enum TileType
     { Water, City, Land }
 
@@ -97,7 +87,6 @@ public class TileScript : MonoBehaviour
     public bool IsNextToSea => Neighbours.Any(t => t.Type == TileType.Water);
 
     public UnitBase? UnitOnTile;
-    public BuildingBase? BuildingOnTile;
 
     private void IncreaseByScale(float scale)
     {
@@ -143,6 +132,8 @@ public class TileScript : MonoBehaviour
                 }
                 break;
         }
+
+
     }
     private Sprite GetSprite(string spriteName)
     {
@@ -152,12 +143,87 @@ public class TileScript : MonoBehaviour
 
     void SetSeaBorder()
     {
-        TilePathFindingComponent.DirectionList.ForEach(direction =>
+        TilePathFindingComponentOld.DirectionList.ForEach(direction =>
         {
-            if (_pathFindingComponent.GetNeighbour(this, direction).Type == TileType.Water)
+            if (GameController.PathFindingComponent.GetNeighbour(this, direction).Type == TileScript.TileType.Water)
             {
                 transform.Find(direction.ToString()).gameObject.SetActive(true);
             }
         });
     }
+
+
+
+    void Start()
+    {
+        //CalculateSprite();
+        PerformCityTurn();
+    }
+
+
+
+    public void PerformCityTurn(int amountIncrease = 10)
+    {
+
+        if (Type != TileType.City || IsNextToSea || Team == 0)
+        {
+            return;
+        }
+
+        if (UnitOnTile != null)
+        {
+            UnitOnTile.Health += amountIncrease;
+            UnitOnTile.Morale += amountIncrease;
+            return;
+        }
+
+        var Unit = Instantiate(UnitRef, transform.position, new Quaternion()).GetComponent<UnitScriptOld>();
+        Unit.Team = Team;
+        Unit.TileStandingOn = this;
+
+        Unit.Health = amountIncrease;
+        Unit.Morale = amountIncrease;
+
+        if (GameController.AsyncGame && Team != 1)
+        {
+            Unit.StartAsyncGameturn();
+        }
+
+
+    }
+
+    public void StartAsyncGameturn()
+    {
+        StartCoroutine(PerformAsyncGameTurn());
+    }
+
+    public IEnumerator PerformAsyncGameTurn()
+    {
+        int turnsWithoutUnit = 0;
+        while (true)
+        {
+            yield return new WaitForSeconds(GameController.CityRateOfCreation);
+
+            if (Team == 0) { continue; }
+
+
+            if (UnitOnTile != null)
+            {
+                PerformCityTurn(1);
+                turnsWithoutUnit = 0;
+            }
+            else if (turnsWithoutUnit < 10)
+            {
+                turnsWithoutUnit++;
+            }
+            else
+            {
+                PerformCityTurn();
+                turnsWithoutUnit = 0;
+            }
+        }
+
+    }
+
+
 }

@@ -4,12 +4,12 @@ using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 
-public class TilePathFindingComponent : MonoBehaviour
+public class TilePathFindingComponentOld : MonoBehaviour
 {
-    private GameControllerScript _gc = null;
-    private GameControllerScript GameController
+    private GameControllerScriptOld _gc = null;
+    private GameControllerScriptOld GameController
     {
-        get => _gc != null ? _gc : _gc = GetComponent<GameControllerScript>();
+        get => _gc != null ? _gc : _gc = GetComponent<GameControllerScriptOld>();
     }
     private List<TileScript> FullTileList => GameController.FullTileList;
 
@@ -201,7 +201,7 @@ public class TilePathFindingComponent : MonoBehaviour
         }
         public float Ftotal => Gcalculated + Hoptimal;
 
-        public TilePathFindingComponent ThisTilePathFinder;
+        public TilePathFindingComponentOld ThisTilePathFinder;
 
         public List<NodeTile> NodeNeighbours =>
         ThisTilePathFinder.GetPossibleMovementsForUnit(Tile)
@@ -299,9 +299,7 @@ public class TilePathFindingComponent : MonoBehaviour
 
 
         }
-        print("RETURN NULL" + safteyVal);
         return ReturnFullPath(currentNode, startNode);
-        return new List<TileScript>();
     }
 
     public List<TileScript> ReturnFullPath(NodeTile finalNode, NodeTile startNode)

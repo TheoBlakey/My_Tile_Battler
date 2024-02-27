@@ -6,7 +6,7 @@ using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
-public class UnitScript : MonoBehaviour
+public class UnitScriptOld : MonoBehaviour
 {
     Color ogColor;
 
@@ -19,13 +19,12 @@ public class UnitScript : MonoBehaviour
     TileScript CurrentlyTravellingTo = null;
     bool TurnHasEnded = false;
 
-    public GameControllerScript _gc = null;
-    public GameControllerScript GameController
+    public GameControllerScriptOld _gc = null;
+    public GameControllerScriptOld GameController
     {
-        get => _gc != null ? _gc : _gc = FindObjectsOfType<GameControllerScript>().FirstOrDefault().GetComponent<GameControllerScript>();
+        get => _gc != null ? _gc : _gc = FindObjectsOfType<GameControllerScriptOld>().FirstOrDefault().GetComponent<GameControllerScriptOld>();
     }
     List<Color> UnitColorList => GameController.ColorList.Select(c => new Color(c.r, c.g, c.b, 0.5f)).ToList();
-    bool AsyncUnitContinue = true;
 
 
 
@@ -47,7 +46,7 @@ public class UnitScript : MonoBehaviour
         set
         {
             _h = System.Math.Min(100, value);
-            if (TileStandingOn.Type != TileScript.TileType.Water)
+            if (TileStandingOn != null)
             {
                 CalculateSprite();
             }
@@ -131,7 +130,7 @@ public class UnitScript : MonoBehaviour
 
 
     public bool _mt = false;
-    public bool MovedThisTurn
+    public bool MovedThisTurn_Not_Used
     {
         get => _mt;
         set
@@ -200,17 +199,17 @@ public class UnitScript : MonoBehaviour
             GameController.WaitingForUnitTeams.Remove(Team);
             TurnHasEnded = false;
 
-            if (GameController.AsyncGame)
-            {
-                StartCoroutine(UnitMovementPause());
-            }
+            //if (GameController.AsyncGame)
+            //{
+            //    StartCoroutine(UnitMovementPause());
+            //}
         }
     }
     IEnumerator UnitMovementPause()
     {
         yield return new WaitForSeconds(GameController.UnitMovedPause);
         AsyncUnitContinue = true;
-        MovedThisTurn = false;
+        MovedThisTurn_Not_Used = false;
     }
 
     private void FixedUpdate() //travelling update
@@ -237,7 +236,7 @@ public class UnitScript : MonoBehaviour
     void PerformMergeOrAttack(TileScript desination)
     {
 
-        UnitScript desinationUnit = desination.UnitOnTile;
+        UnitScriptOld desinationUnit = desination.UnitOnTile;
 
         bool isEnemyUnitOnTile = desinationUnit != null && desinationUnit.Team != Team;
 
@@ -267,13 +266,14 @@ public class UnitScript : MonoBehaviour
 
         if (isEnemyUnitOnTile || (desination.Type == TileScript.TileType.City && desination.Team != Team))
         {
-            Instantiate(FightEffect_Ref, transform.position, new Quaternion()).GetComponent<UnitScript>();
+            Instantiate(FightEffect_Ref, transform.position, new Quaternion());
         }
 
         TileStandingOn = desination;
         CaputreSurroundingTiles();
-        MovedThisTurn = true;
         CalculateSprite();
+
+        //MovedThisTurn_Not_Used = true;
     }
 
     void CaputreSurroundingTiles()
@@ -290,12 +290,15 @@ public class UnitScript : MonoBehaviour
               .ForEach(t => t.Team = Team);
     }
 
-    (int, int) OutComeOfBattle(UnitScript unit1, UnitScript unit2)
+    (int, int) OutComeOfBattle(UnitScriptOld unit1, UnitScriptOld unit2)
     {
-        float RANDOMNESSOFWAR = 1;
+        int random = 0;
+        //1 - 10,000
+        int unit1AttackStrength = (int)ConvertToProportional(unit1);
+        int unit2AttackStrength = (int)ConvertToProportional(unit2);
 
-        int unit1Health = unit1.Health - (int)(unit2.Health * unit2.Morale * Random.Range(1f, RANDOMNESSOFWAR));
-        int unit2Health = unit2.Health - (int)(unit2.Health * unit2.Morale * Random.Range(1f, RANDOMNESSOFWAR));
+        int unit1Health = unit1.Health - (unit2AttackStrength + Random.Range(-random, random));
+        int unit2Health = unit2.Health - (unit1AttackStrength + Random.Range(-random, random));
 
         if (unit1Health < 0 && unit2Health < 0)
         {
@@ -303,6 +306,11 @@ public class UnitScript : MonoBehaviour
         }
 
         return (unit1Health, unit2Health);
+    }
+    public static double ConvertToProportional(UnitScriptOld unit1)
+    {
+        int total = unit1.Health * unit1.Morale;
+        return (total - 1) * (100 - 1) / (10000 - 1) + 1;
     }
 
     //bool WillWinBattle(TileScript Loction)
@@ -317,7 +325,7 @@ public class UnitScript : MonoBehaviour
 
     public float ChanceToWInBattle(TileScript Loction)
     {
-        UnitScript enemeyUnit = Loction.UnitOnTile;
+        UnitScriptOld enemeyUnit = Loction.UnitOnTile;
         if (enemeyUnit == null) { return 1; }
 
         (int unit1Health, int unit2Health) = OutComeOfBattle(this, enemeyUnit);

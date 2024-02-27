@@ -5,24 +5,24 @@ using UnityEngine;
 public class EnemyTurnComponent : MonoBehaviour
 {
 
-    private GameControllerScript _gc = null;
-    private GameControllerScript GameController
+    private GameControllerScriptOld _gc = null;
+    private GameControllerScriptOld GameController
     {
-        get => _gc != null ? _gc : _gc = GetComponent<GameControllerScript>();
+        get => _gc != null ? _gc : _gc = GetComponent<GameControllerScriptOld>();
     }
 
-    public void PerfromEnemyTeamMove(int Team, UnitScript soloUnit = null)
+    public void PerfromEnemyTeamMove(int Team, UnitScriptOld soloUnit = null)
     {
         List<TileScript> AllFriendlyCities = GameController.AllCities.Where(c => c.Team == Team).ToList();
         List<TileScript> AllNonFriendlyCities = GameController.AllCities.Where(c => c.Team != Team).ToList();
 
-        List<UnitScript> ALLUNITS = FindObjectsOfType<UnitScript>().Where(u => u.TileStandingOn != null).ToList();
+        List<UnitScriptOld> ALLUNITS = FindObjectsOfType<UnitScriptOld>().Where(u => u.TileStandingOn != null).ToList();
 
-        List<UnitScript> AllTeamUnitsReady = ALLUNITS.Where(u => u.Team == Team && !u.MovedThisTurn).ToList();
-        if (soloUnit != null) { AllTeamUnitsReady = new List<UnitScript> { soloUnit }; };
+        List<UnitScriptOld> AllTeamUnitsReady = ALLUNITS.Where(u => u.Team == Team && !u.MovedThisTurn_Not_Used).ToList();
+        if (soloUnit != null) { AllTeamUnitsReady = new List<UnitScriptOld> { soloUnit }; };
         if (AllTeamUnitsReady.Count == 0) { return; }
 
-        List<UnitScript> AllEnemyUnits = ALLUNITS.Where(u => u.Team != Team).ToList();
+        List<UnitScriptOld> AllEnemyUnits = ALLUNITS.Where(u => u.Team != Team).ToList();
         List<TileScript> AllTilesWithNonFriendlyUnits = AllEnemyUnits.Select(s => s.TileStandingOn).ToList();
 
         List<PossibleMove> possibleMoves = new();
@@ -85,15 +85,15 @@ public class EnemyTurnComponent : MonoBehaviour
 
     public class PossibleMove
     {
-        public TilePathFindingComponent PathFindingComponent;
-        public UnitScript UnitMoving;
+        public TilePathFindingComponentOld PathFindingComponent;
+        public UnitScriptOld UnitMoving;
         public TypeOfMove TypeOfMove;
         public TileScript LocationOfMovement;
 
-        public List<UnitScript> EnemyUnitsAttacking;
+        public List<UnitScriptOld> EnemyUnitsAttacking;
         //float Distance => PathFindingComponent.GetRayCastApproxDistance(UnitMoving.transform, LocationOfMovement.transform);
 
-        float Distance(UnitScript unit)
+        float Distance(UnitScriptOld unit)
         {
             return PathFindingComponent.GetRayCastApproxDistance(unit.transform, LocationOfMovement.transform);
         }
@@ -121,7 +121,7 @@ public class EnemyTurnComponent : MonoBehaviour
                     break;
                 case TypeOfMove.DefendCity:
 
-                    UnitScript closestEnemyUnit = EnemyUnitsAttacking
+                    UnitScriptOld closestEnemyUnit = EnemyUnitsAttacking
                         .OrderBy(enemy => PathFindingComponent.GetRayCastApproxDistance(enemy.transform, LocationOfMovement.transform))
                         .FirstOrDefault();
 

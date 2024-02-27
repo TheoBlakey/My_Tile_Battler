@@ -23,6 +23,7 @@ public class Arrow_Script : Utility_Functions
             thrownDirection = (KnightRigidBodyComponent.position - ArrowRigidBodyComponent.position).normalized;
             AngleRad = Mathf.Atan2(KnightRigidBodyComponent.position.y - ArrowRigidBodyComponent.position.y, KnightRigidBodyComponent.position.x - ArrowRigidBodyComponent.position.x);
 
+
             SpriteRenderer ArrowSpriteRenderer = GetComponent<SpriteRenderer>();
             ArrowSpriteRenderer.sprite = SpriteEvilVersion;
             gameObject.AddComponent<DamagesPlayerOnContact_Component>();

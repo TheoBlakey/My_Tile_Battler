@@ -22,7 +22,7 @@ public class HexTileBoardGenerator : MonoBehaviour
     }
     public void CreateUnits()
     {
-        FindObjectsOfType<GameControllerScript>().FirstOrDefault().FullTileList.ForEach(t => t.PerformCityTurn());
+        FindObjectsOfType<GameControllerScriptOld>().FirstOrDefault().FullTileList.ForEach(t => t.PerformCityTurn());
     }
 
 
@@ -60,7 +60,7 @@ public class HexTileBoardGenerator : MonoBehaviour
         List<TileScript> LandTiles = LandCoordinates.Select(i => GenerateTileObject(i, TileScript.TileType.Land)).ToList();
         List<TileScript> AllTiles = WaterTiles.Union(LandTiles).ToList();
 
-        var gameController = FindObjectsOfType<GameControllerScript>().FirstOrDefault();
+        var gameController = FindObjectsOfType<GameControllerScriptOld>().FirstOrDefault();
         gameController.FullTileList = AllTiles;
         gameController.TeamList = Enumerable.Range(1, PlayerNumber).ToList();
 
