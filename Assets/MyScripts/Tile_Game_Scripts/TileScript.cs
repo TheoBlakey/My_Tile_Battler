@@ -14,15 +14,32 @@ public class TileScript : MonoBehaviour
     public List<TileScript> Neighbours;
     TilePathFindingComponent _pathFindingComponent;
 
+    private UnitBase _u;
+    public UnitBase UnitOnTile
+    {
+        get => _u;
+        set
+        {
+            _u = value;
+            if (TryGetComponent<CityComponent>(out var city))
+            {
+                city.IsUnitOnTile = value != null;
+            }
+
+        }
+    }
+
+    public BuildingBase BuildingOnTile;
+
     bool IsSuitableForBuilding = false;
+    public bool CurrntlyBuildAble => IsSuitableForBuilding || BuildingOnTile == null;
     void Start()
     {
         _pathFindingComponent = this.AddComponent<TilePathFindingComponent>();
         Neighbours = _pathFindingComponent.GetallTileNeighbours(this);
 
-        IsSuitableForBuilding = !IsNextToSea && !(Type != TileType.City) && Neighbours.Any(n => n.Type == TileType.City);
+        IsSuitableForBuilding = !IsNextToSea && Type == TileType.Land && Neighbours.Any(n => n.Type == TileType.City);
     }
-
 
     [SerializeField]
     public bool IsCapital = false;
@@ -47,19 +64,9 @@ public class TileScript : MonoBehaviour
 
             _t = value;
 
-            Color c = TileColorList[value];
 
-            if (Type == TileType.City)
-            {
-                c.a = 0.25f;
-                //c.a = 0.75f;
-            }
-            if (IsCapital)
-            {
-                c.a = 0.125f;
-            }
+            ShadeCities();
 
-            TeamShader.GetComponent<SpriteRenderer>().color = c;
 
             if (TryGetComponent<CityComponent>(out var city))
             {
@@ -68,10 +75,24 @@ public class TileScript : MonoBehaviour
 
             if (_t != 0 || _t != 5)
             {
-                var teamCity = this.AddComponent<CityComponent>();
-                teamCity.Team = Team;
+                this.AddComponent<CityComponent>();
             }
         }
+    }
+
+    void ShadeCities()
+    {
+        Color c = TileColorList[Team];
+        if (Type == TileType.City)
+        {
+            c.a = 0.25f;
+            //c.a = 0.75f;
+        }
+        if (IsCapital)
+        {
+            c.a = 0.125f;
+        }
+        TeamShader.GetComponent<SpriteRenderer>().color = c;
     }
 
     private bool _h = false;
@@ -86,7 +107,6 @@ public class TileScript : MonoBehaviour
     }
 
 
-
     public enum TileType
     { Water, City, Land }
 
@@ -96,8 +116,6 @@ public class TileScript : MonoBehaviour
     public bool IsLandOrCity => Type == TileType.Land || Type == TileType.City;
     public bool IsNextToSea => Neighbours.Any(t => t.Type == TileType.Water);
 
-    public UnitBase? UnitOnTile;
-    public BuildingBase? BuildingOnTile;
 
     private void IncreaseByScale(float scale)
     {

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -53,9 +54,9 @@ public class VikingUnit : UnitBase
         while (true)
         {
             TileScript Target = FindTarget();
-            var path = tilePathFindingComponent
+            TileScript firstPathMove = tilePathFindingComponent.FindPath(TileOn, Target).First();
 
-            MoveToTile(Target);
+            MoveToTile(firstPathMove);
 
             while (IsTravelling || Paused)
             {

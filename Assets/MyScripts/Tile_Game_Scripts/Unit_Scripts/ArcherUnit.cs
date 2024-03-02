@@ -44,7 +44,7 @@ public class ArcherUnit : TeamUnit
                 FirstOrDefault();
 
             ShootOneArrow(closestUnit);
-            TriggerShootDelay();
+            StartCoroutine(TriggerShootDelay());
         }
 
     }

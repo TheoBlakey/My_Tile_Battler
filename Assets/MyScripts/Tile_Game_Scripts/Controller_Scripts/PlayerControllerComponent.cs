@@ -21,6 +21,7 @@ public class PlayerController : MonoBehaviour
             HighlightedTiles = value != null ? PathFindingComponent.GetPossibleMovementsForUnit(value) : new List<TileScript>();
         }
     }
+    UnitBase UnitOnTile => SelectedTileWithUnit?.UnitOnTile.Team == 1 ? SelectedTileWithUnit?.UnitOnTile : null;
 
     private List<TileScript> _ht = new();
     public List<TileScript> HighlightedTiles
@@ -34,12 +35,47 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    bool CheckNotEmptyTile()
+    {
+        return true;
+    }
+
     void Update()
     {
+        if (UnitOnTile == null && SelectedTileWithUnit != null)
+        {
+            SelectedTileWithUnit = null;
+        }
+
         if (Input.GetMouseButtonDown(0))
         {
             PerformTileSelection();
+            return;
         }
+
+        if (UnitOnTile != null && UnitOnTile.TryGetComponent<BuilderUnit>(out var builder))
+        {
+            PerfromBuilderInputs(builder);
+        }
+    }
+
+    private void PerfromBuilderInputs(BuilderUnit builder)
+    {
+        switch (Input.inputString)
+        {
+            case "b":
+                builder.TryCreateBuilding(nameof(BarracksBuilding));
+                break;
+            case "f":
+                builder.TryCreateBuilding(nameof(Farmbuilding));
+                break;
+            case "a":
+                builder.TryBecomeArcher();
+                break;
+            default:
+                return;
+        }
+        SelectedTileWithUnit = null;
     }
 
 
@@ -62,10 +98,9 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        if (HighlightedTiles.Contains(clickedTile))
+        if (HighlightedTiles.Contains(clickedTile) && UnitOnTile != null)
         {
-            SelectedTileWithUnit.UnitOnTile.MoveToTile(clickedTile);
-
+            UnitOnTile.MoveToTile(clickedTile);
         }
 
         SelectedTileWithUnit = null;

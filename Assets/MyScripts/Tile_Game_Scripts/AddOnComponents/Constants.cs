@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-class Constants
+public static class Constants
 {
     public static readonly List<Color> ColorList = new()
     {
@@ -13,5 +13,6 @@ class Constants
        new (0, 1, 0, 1), //green
        new(1, 1, 1, 1) //white
     };
+
 
 }

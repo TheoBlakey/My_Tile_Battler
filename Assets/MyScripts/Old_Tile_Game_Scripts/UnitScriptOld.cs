@@ -67,11 +67,11 @@ public class UnitScriptOld : MonoBehaviour
         HealthText.text = Morale + "/" +
             "<br>" + "   /" + Health;
     }
-    void ToggleTextOnOff(bool On)
+    void HideText(bool On)
     {
-        Color tempColor = HealthText.color;
-        tempColor.a = On ? 1 : 0;
-        HealthText.color = tempColor;
+        Color ogTextColor = HealthText.color;
+        ogTextColor.a = On ? 1 : 0;
+        HealthText.color = ogTextColor;
     }
 
     public Sprite SpriteLevels() =>

@@ -20,11 +20,6 @@ public class HexTileBoardGenerator : MonoBehaviour
     {
         get => _hexTileRefFromPath != null ? _hexTileRefFromPath : _hexTileRefFromPath = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>("Assets/Objects/Hex_Tile.prefab").GameObject();
     }
-    public void CreateUnits()
-    {
-        FindObjectsOfType<GameControllerScriptOld>().FirstOrDefault().FullTileList.ForEach(t => t.PerformCityTurn());
-    }
-
 
     public void ClearMap()
     {
@@ -60,9 +55,9 @@ public class HexTileBoardGenerator : MonoBehaviour
         List<TileScript> LandTiles = LandCoordinates.Select(i => GenerateTileObject(i, TileScript.TileType.Land)).ToList();
         List<TileScript> AllTiles = WaterTiles.Union(LandTiles).ToList();
 
-        var gameController = FindObjectsOfType<GameControllerScriptOld>().FirstOrDefault();
+        var gameController = FindObjectsOfType<GameController>().FirstOrDefault();
         gameController.FullTileList = AllTiles;
-        gameController.TeamList = Enumerable.Range(1, PlayerNumber).ToList();
+        //gameController.TeamList = Enumerable.Range(1, PlayerNumber).ToList();
 
         int NUMBEROFCOSALCITIES = LandTiles.Count / 40; //50
         int NUMBEROFLANDCITES = LandTiles.Count / 40; //50

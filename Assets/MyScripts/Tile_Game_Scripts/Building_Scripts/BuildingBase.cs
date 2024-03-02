@@ -2,30 +2,31 @@ using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
-public abstract class BuildingBase : MonoBehaviour
+public abstract class BuildingBase : MonoBehaviour, ITeamTileInterface
 {
     public ShadedOutComponent shadedOutComponent;
     public abstract string SpriteLandName { get; }
     private TileScript _ts;
-    public TileScript TileStoodOn
+    public TileScript TileOn
     {
         get => _ts;
         set
         {
-            if (_ts != null) _ts.BuildingOnTile = null;
-
             _ts = value;
-
-            if (_ts != null) _ts.BuildingOnTile = this;
+            if (_ts == null) _ts.BuildingOnTile = this;
 
         }
     }
-    int Team;
+    public CreateUnitOrBuildingComponent Creator;
+
+    public int Team { get; set; }
+
     private void Start()
     {
         this.AddComponent<DestroyedByVikingComponent>();
         shadedOutComponent = this.AddComponent<ShadedOutComponent>();
         CalculateSprite();
+        Creator = this.AddComponent<CreateUnitOrBuildingComponent>();
     }
 
     void CalculateSprite()
@@ -41,6 +42,6 @@ public abstract class BuildingBase : MonoBehaviour
 
     private void OnDestroy()
     {
-        TileStoodOn = null;
+        TileOn = null;
     }
 }

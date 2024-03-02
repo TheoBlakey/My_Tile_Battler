@@ -5,7 +5,7 @@ using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
-public abstract class UnitBase : MonoBehaviour
+public abstract class UnitBase : MonoBehaviour, ITeamTileInterface
 {
     Color ogColor;
     public GameObject FightEffect_Ref => AssetDatabase.LoadAssetAtPath<Object>("Assets/Objects/Fight_Effect.prefab").GameObject();
@@ -19,6 +19,7 @@ public abstract class UnitBase : MonoBehaviour
 
     ShadedOutComponent shadedOutComponent;
     public TilePathFindingComponent tilePathFindingComponent;
+    public CreateUnitOrBuildingComponent Creator;
 
     private void Start()
     {
@@ -26,6 +27,7 @@ public abstract class UnitBase : MonoBehaviour
         tilePathFindingComponent = this.AddComponent<TilePathFindingComponent>();
         CalculateSprite();
         AddCollider();
+        Creator = this.AddComponent<CreateUnitOrBuildingComponent>();
     }
 
     private void AddCollider()
@@ -43,7 +45,7 @@ public abstract class UnitBase : MonoBehaviour
 
     void CalculateSprite()
     {
-        bool travellingOnWater = TileStoodOn?.Type == TileScript.TileType.Water || TileTravellingTo?.Type == TileScript.TileType.Water;
+        bool travellingOnWater = TileOn?.Type == TileScript.TileType.Water || TileTravellingTo?.Type == TileScript.TileType.Water;
 
         Sprite sprite = travellingOnWater ?
             GetSprite(SpriteWaterName) :
@@ -72,7 +74,7 @@ public abstract class UnitBase : MonoBehaviour
     }
 
     private TileScript _ts;
-    public TileScript TileStoodOn
+    public TileScript TileOn
     {
         get => _ts;
         set
@@ -106,22 +108,24 @@ public abstract class UnitBase : MonoBehaviour
             }
         }
     }
-    int pauseTime = 2;
-    bool unitShouldShadeOnPause = true;
-    IEnumerator PauseUnitAfterMovement()
+
+    protected bool unitShouldShadeOnPause = true;
+
+    public IEnumerator PauseUnitForTime(int time)
     {
         Paused = true;
-        yield return new WaitForSeconds(pauseTime);
+        yield return new WaitForSeconds(time);
         Paused = false;
     }
 
+    int movementPauseTime = 2;
     IEnumerator MoveToTileCoroutine()
     {
         yield return PerfromMovementAnimation();
         //Movement Finished
-        TileStoodOn = TileTravellingTo = null;
+        TileOn = TileTravellingTo = null;
         CaputreSurroundingTiles();
-        PauseUnitAfterMovement();
+        PauseUnitForTime(movementPauseTime);
     }
     bool PerfromMovementAnimation()
     {
@@ -146,9 +150,9 @@ public abstract class UnitBase : MonoBehaviour
 
     void CaputreSurroundingTiles()
     {
-        if (TileStoodOn.Type == TileScript.TileType.Water) { return; }
+        if (TileOn.Type == TileScript.TileType.Water) { return; }
 
-        List<TileScript> tilesToCapture = tilePathFindingComponent.GetAllNeighboursToADistance(TileStoodOn, 2, false);
+        List<TileScript> tilesToCapture = tilePathFindingComponent.GetAllNeighboursToADistance(TileOn, 2, false);
         tilesToCapture
               .Where(t => t.UnitOnTile == null)
               .ToList() // Convert to a list to avoid null reference issues
@@ -156,6 +160,6 @@ public abstract class UnitBase : MonoBehaviour
     }
     private void OnDestroy()
     {
-        TileStoodOn = null;
+        TileOn = null;
     }
 }
