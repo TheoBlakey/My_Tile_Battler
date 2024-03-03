@@ -1,20 +1,24 @@
+using UnityEngine;
+
 public class BuilderUnit : TeamUnit
 {
-    public override string SpriteLandName => "Builder_Unit";
+    public override string SpriteLandName => "builder_unit";
 
     public void TryCreateBuilding(string buildingName)
     {
-        if (Paused) return;
+        if (IsFunctionalyPaused) return;
         if (!TileOn.CurrntlyBuildAble) return;
 
-        Creator.CreateUnitOrBuilding(Team, TileOn, buildingName);
+        GameObject newConstruction = Creator.CreateUnitOrBuilding(Team, TileOn, nameof(ConstructionBuilding));
 
-        StartCoroutine(PauseUnitForTime(10));
+        newConstruction.GetComponent<ConstructionBuilding>().BuildingToMake = buildingName;
+
+        StartCoroutine(PauseUnitForTime(Constants.ConstructionTime));
     }
 
     public void TryBecomeArcher()
     {
-        if (Paused) return;
+        if (IsFunctionalyPaused) return;
         if (TileOn.BuildingOnTile.TryGetComponent<BarracksBuilding>(out var building))
         {
             if (building.busy) return;

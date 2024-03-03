@@ -13,7 +13,7 @@ class ConstructionBuilding : BuildingBase
 
     IEnumerator ConstructBuilding()
     {
-        yield return new WaitForSeconds(10);
+        yield return new WaitForSeconds(Constants.ConstructionTime);
         Creator.CreateUnitOrBuilding(Team, TileOn, BuildingToMake);
         Destroy(this);
     }

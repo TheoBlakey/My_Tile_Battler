@@ -25,7 +25,8 @@ public class TileScriptOld : MonoBehaviour
     public List<TileScript> _n;
     public List<TileScript> Neighbours
     {
-        get => _n.Any() ? _n : _n = GameController.PathFindingComponent.GetallTileNeighbours(this);
+        get { return _n; }
+        //get => _n.Any() ? _n : _n = GameController.PathFindingComponent.GetallTileNeighbours(this);
     }
 
     [SerializeField]
@@ -84,7 +85,7 @@ public class TileScriptOld : MonoBehaviour
     public TileType Type;
 
     public bool IsLandOrCity => Type == TileType.Land || Type == TileType.City;
-    public bool IsNextToSea => Neighbours.Any(t => t.Type == TileType.Water);
+    public bool IsNextToSea => true /*Neighbours.Any(t => t.Type == TileType.Water)*/;
 
     public UnitBase? UnitOnTile;
 
@@ -145,10 +146,10 @@ public class TileScriptOld : MonoBehaviour
     {
         TilePathFindingComponentOld.DirectionList.ForEach(direction =>
         {
-            if (GameController.PathFindingComponent.GetNeighbour(this, direction).Type == TileScript.TileType.Water)
-            {
-                transform.Find(direction.ToString()).gameObject.SetActive(true);
-            }
+            //if (GameController.PathFindingComponent.GetNeighbour(this, direction).Type == TileScript.TileType.Water)
+            //{
+            //    transform.Find(direction.ToString()).gameObject.SetActive(true);
+            //}
         });
     }
 
@@ -172,14 +173,14 @@ public class TileScriptOld : MonoBehaviour
 
         if (UnitOnTile != null)
         {
-            UnitOnTile.Health += amountIncrease;
-            UnitOnTile.Morale += amountIncrease;
+            //UnitOnTile.Health += amountIncrease;
+            //UnitOnTile.Morale += amountIncrease;
             return;
         }
 
         var Unit = Instantiate(UnitRef, transform.position, new Quaternion()).GetComponent<UnitScriptOld>();
         Unit.Team = Team;
-        Unit.TileStandingOn = this;
+        //Unit.TileStandingOn = this;
 
         Unit.Health = amountIncrease;
         Unit.Morale = amountIncrease;

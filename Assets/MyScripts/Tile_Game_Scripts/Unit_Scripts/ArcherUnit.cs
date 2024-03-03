@@ -7,27 +7,16 @@ using UnityEngine;
 
 public class ArcherUnit : TeamUnit
 {
-    public override string SpriteLandName => "Archer_Unit";
+    public override string SpriteLandName => "archer_unit";
     public GameObject Arrow_Ref => AssetDatabase.LoadAssetAtPath<Object>("Assets/Objects/Arrow.prefab").GameObject();
     public List<VikingUnit> VikingUnitList = new();
 
     bool canShoot = true;
     private void Start()
     {
-        SetUpChildColliderCircle();
+        SetUpChildColliderCircle(nameof(ArcherChildCollider));
     }
 
-    void SetUpChildColliderCircle()
-    {
-        GameObject childOb = new("ColliderCircle");
-        childOb.transform.SetParent(gameObject.transform);
-
-        gameObject.AddComponent<ArcherChildCollider>();
-
-        CircleCollider2D circleCollider = gameObject.AddComponent<CircleCollider2D>();
-        circleCollider.isTrigger = true;
-        circleCollider.radius = 1f;
-    }
     void ShootOneArrow(VikingUnit unit)
     {
         Arrow arrow = Instantiate(Arrow_Ref, transform.position, new Quaternion()).GetComponent<Arrow>();
@@ -49,7 +38,7 @@ public class ArcherUnit : TeamUnit
 
     }
 
-    IEnumerable TriggerShootDelay()
+    IEnumerator TriggerShootDelay()
     {
         canShoot = false;
         yield return new WaitForSeconds(2);

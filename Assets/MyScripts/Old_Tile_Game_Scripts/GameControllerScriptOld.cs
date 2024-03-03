@@ -107,15 +107,15 @@ public class GameControllerScriptOld : MonoBehaviour
             .Where(tile => tile != null)
             .FirstOrDefault();
 
-        if (SelectedTileWithUnit == null && clickedTile.UnitOnTile != null && clickedTile.UnitOnTile.Team == 1 && !clickedTile.UnitOnTile.ShadedOut)
-        {
-            SelectedTileWithUnit = clickedTile;
-            return;
-        }
+        //if (SelectedTileWithUnit == null && clickedTile.UnitOnTile != null && clickedTile.UnitOnTile.Team == 1 && !clickedTile.UnitOnTile.ShadedOut)
+        //{
+        //    SelectedTileWithUnit = clickedTile;
+        //    return;
+        //}
 
         if (HighlightedTiles.Contains(clickedTile))
         {
-            SelectedTileWithUnit.UnitOnTile.MoveToOrAttackTile(clickedTile);
+            //SelectedTileWithUnit.UnitOnTile.MoveToOrAttackTile(clickedTile);
             playerTurnsLeft--;
 
             List<UnitScriptOld> moreUnitsToMove = FindObjectsOfType<UnitScriptOld>().Where(u => u.Team == 1 && !u.MovedThisTurn_Not_Used).ToList();
@@ -130,10 +130,10 @@ public class GameControllerScriptOld : MonoBehaviour
     }
     void CheckSelectedUnitNotDestoryed()
     {
-        if (SelectedTileWithUnit != null && SelectedTileWithUnit.UnitOnTile != null && SelectedTileWithUnit.UnitOnTile.Team == 1 && SelectedTileWithUnit.UnitOnTile.ShadedOut == false)
-        {
-            return;
-        }
+        //if (SelectedTileWithUnit != null && SelectedTileWithUnit.UnitOnTile != null && SelectedTileWithUnit.UnitOnTile.Team == 1 && SelectedTileWithUnit.UnitOnTile.ShadedOut == false)
+        //{
+        //    return;
+        //}
 
         SelectedTileWithUnit = null;
     }
@@ -152,7 +152,7 @@ public class GameControllerScriptOld : MonoBehaviour
             return;
         }
 
-        AllCities.ForEach(c => c.StartAsyncGameturn());
+        //AllCities.ForEach(c => c.StartAsyncGameturn());
         for (int i = 1; i < TeamList.Count; i++)
         {
             StartCoroutine(AsyncTeamTurns(TeamList[i]));
@@ -205,7 +205,7 @@ public class GameControllerScriptOld : MonoBehaviour
         bool TeamHasCapital = AllCities.Any(c => c.IsCapital);
         if (!TeamHasCapital) { yield break; }
 
-        teamCities.ForEach(c => c.PerformCityTurn());
+        //teamCities.ForEach(c => c.PerformCityTurn());
 
         print("TEAM TURN : " + teamNum);
         if (teamNum == 1)

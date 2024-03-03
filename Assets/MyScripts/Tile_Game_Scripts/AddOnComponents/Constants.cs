@@ -14,5 +14,5 @@ public static class Constants
        new(1, 1, 1, 1) //white
     };
 
-
+    public static readonly int ConstructionTime = 10;
 }

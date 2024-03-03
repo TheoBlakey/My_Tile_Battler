@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour
+public class PlayerControllerComponent : MonoBehaviour
 {
     TilePathFindingComponent PathFindingComponent;
     private void Start()
@@ -33,11 +33,6 @@ public class PlayerController : MonoBehaviour
             value.ForEach(t => t.HighLighted = true);
             _ht = value;
         }
-    }
-
-    bool CheckNotEmptyTile()
-    {
-        return true;
     }
 
     void Update()
@@ -92,7 +87,7 @@ public class PlayerController : MonoBehaviour
             .Where(tile => tile != null)
             .FirstOrDefault();
 
-        if (SelectedTileWithUnit == null && clickedTile.UnitOnTile != null && clickedTile.UnitOnTile.Team == 1 && !clickedTile.UnitOnTile.Paused)
+        if (SelectedTileWithUnit == null && clickedTile.UnitOnTile != null && clickedTile.UnitOnTile.Team == 1 && !clickedTile.UnitOnTile.IsFunctionalyPaused)
         {
             SelectedTileWithUnit = clickedTile;
             return;

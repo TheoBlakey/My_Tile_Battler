@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +9,7 @@ using UnityEngine;
 public abstract class UnitBase : MonoBehaviour, ITeamTileInterface
 {
     Color ogColor;
-    public GameObject FightEffect_Ref => AssetDatabase.LoadAssetAtPath<Object>("Assets/Objects/Fight_Effect.prefab").GameObject();
+    public GameObject FightEffect_Ref => AssetDatabase.LoadAssetAtPath<UnityEngine.Object>("Assets/Objects/Fight_Effect.prefab").GameObject();
 
     SpriteRenderer SpriteRenderer => GetComponent<SpriteRenderer>();
     SpriteRenderer TeamShaderSpriteRenderer => transform.Find("TeamShader").gameObject.GetComponent<SpriteRenderer>();
@@ -95,8 +96,10 @@ public abstract class UnitBase : MonoBehaviour, ITeamTileInterface
         StartCoroutine(MoveToTileCoroutine());
     }
 
+    public bool IsFunctionalyPaused => Paused || IsTravelling;
+
     bool _p = false;
-    public bool Paused
+    private bool Paused
     {
         get => _p;
         set
@@ -124,15 +127,15 @@ public abstract class UnitBase : MonoBehaviour, ITeamTileInterface
         yield return PerfromMovementAnimation();
         //Movement Finished
         TileOn = TileTravellingTo = null;
-        CaputreSurroundingTiles();
-        PauseUnitForTime(movementPauseTime);
+        //CaputreSurroundingTiles();
+        StartCoroutine(PauseUnitForTime(movementPauseTime));
     }
     bool PerfromMovementAnimation()
     {
         while (TileTravellingTo.transform.position != transform.position)
         {
             MoveObject();
-            if (Vector2.Distance(transform.position, TileTravellingTo.transform.position) < 0.01f)
+            if (Vector2.Distance(transform.position, TileTravellingTo.transform.position) < 0.005f) //0.01
             {
                 this.transform.position = TileTravellingTo.transform.position;
             }
@@ -161,5 +164,19 @@ public abstract class UnitBase : MonoBehaviour, ITeamTileInterface
     private void OnDestroy()
     {
         TileOn = null;
+    }
+
+    protected void SetUpChildColliderCircle(string colliderName)
+    {
+        GameObject childOb = new("ColliderCircle");
+        Type componentType = Type.GetType(colliderName);
+        childOb.AddComponent(componentType);
+
+        CircleCollider2D circleCollider = childOb.AddComponent<CircleCollider2D>();
+        circleCollider.isTrigger = true;
+        circleCollider.radius = 1f;
+
+        Instantiate(childOb, transform);
+        //childOb.transform.SetParent(gameObject.transform);
     }
 }

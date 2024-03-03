@@ -116,6 +116,7 @@ public class TileScript : MonoBehaviour
     public bool IsLandOrCity => Type == TileType.Land || Type == TileType.City;
     public bool IsNextToSea => Neighbours.Any(t => t.Type == TileType.Water);
 
+    public bool IsVulnerableToAttack => Type != TileType.City || Neighbours.All(n => n.BuildingOnTile == null);
 
     private void IncreaseByScale(float scale)
     {

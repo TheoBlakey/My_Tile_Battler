@@ -10,8 +10,9 @@ public class GameController : MonoBehaviour
     public List<TileScript> FullTileList;
 
     public List<TileScript> AllCities;
+    public List<TileScript> AllEdgeWaterTilese;
 
-    CreateUnitOrBuildingComponent Creator;
+    public CreateUnitOrBuildingComponent Creator;
     void GenerateStartingUnits()
     {
         foreach (TileScript tile in AllCities)
@@ -26,6 +27,11 @@ public class GameController : MonoBehaviour
         AllCities = FullTileList.Where(t => t.Type == TileScript.TileType.City).ToList();
         Creator = this.AddComponent<CreateUnitOrBuildingComponent>();
         GenerateStartingUnits();
+
+        this.AddComponent<PlayerControllerComponent>();
+        this.AddComponent<VikingControllerComponent>();
+
+        AllEdgeWaterTilese = FullTileList.Where(t => t.Neighbours.Count < 6).ToList();
     }
 
 

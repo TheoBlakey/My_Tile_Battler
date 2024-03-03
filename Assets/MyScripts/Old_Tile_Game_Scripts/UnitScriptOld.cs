@@ -117,7 +117,7 @@ public class UnitScriptOld : MonoBehaviour
 
             if (value == null) { return; }
 
-            value.UnitOnTile = this;
+            //value.UnitOnTile = this;
 
             if (value.Team != Team && value.Type != TileScript.TileType.Water)
             {
@@ -208,7 +208,7 @@ public class UnitScriptOld : MonoBehaviour
     IEnumerator UnitMovementPause()
     {
         yield return new WaitForSeconds(GameController.UnitMovedPause);
-        AsyncUnitContinue = true;
+        //AsyncUnitContinue = true;
         MovedThisTurn_Not_Used = false;
     }
 
@@ -236,7 +236,7 @@ public class UnitScriptOld : MonoBehaviour
     void PerformMergeOrAttack(TileScript desination)
     {
 
-        UnitScriptOld desinationUnit = desination.UnitOnTile;
+        UnitScriptOld desinationUnit = new();
 
         bool isEnemyUnitOnTile = desinationUnit != null && desinationUnit.Team != Team;
 
@@ -325,7 +325,7 @@ public class UnitScriptOld : MonoBehaviour
 
     public float ChanceToWInBattle(TileScript Loction)
     {
-        UnitScriptOld enemeyUnit = Loction.UnitOnTile;
+        UnitScriptOld enemeyUnit = new();
         if (enemeyUnit == null) { return 1; }
 
         (int unit1Health, int unit2Health) = OutComeOfBattle(this, enemeyUnit);
