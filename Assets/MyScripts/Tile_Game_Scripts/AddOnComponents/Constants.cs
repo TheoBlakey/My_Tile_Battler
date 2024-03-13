@@ -15,4 +15,25 @@ public static class Constants
     };
 
     public static readonly int ConstructionTime = 10;
+
+
+    //public static readonly Dictionary<TilePathFindingComponent.Direction, (int, int)> DirectionOffsetsOdd = new()
+    //{
+    //    { TilePathFindingComponent.Direction.N, (0, 1) },
+    //    { TilePathFindingComponent.Direction.NE, (1, 0) },
+    //    { TilePathFindingComponent.Direction.NW, (-1, 0) },
+    //    { TilePathFindingComponent.Direction.S, (0, -1) },
+    //    { TilePathFindingComponent.Direction.SE, (1, -1) },
+    //    { TilePathFindingComponent.Direction.SW, (-1, -1) }
+    //};
+
+    //public static readonly Dictionary<TilePathFindingComponent.Direction, (int, int)> DirectionOffsetsEven = new()
+    //{
+    //    { TilePathFindingComponent.Direction.N, (0, 1) },
+    //    { TilePathFindingComponent.Direction.NE, (1, 1) },
+    //    { TilePathFindingComponent.Direction.NW, (-1, 1) },
+    //    { TilePathFindingComponent.Direction.S, (0, -1) },
+    //    { TilePathFindingComponent.Direction.SE, (1, 0) },
+    //    { TilePathFindingComponent.Direction.SW, (-1, 0) }
+    //};
 }

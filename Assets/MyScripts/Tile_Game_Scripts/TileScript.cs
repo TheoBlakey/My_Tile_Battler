@@ -8,11 +8,16 @@ using UnityEngine;
 [Serializable()]
 public class TileScript : MonoBehaviour
 {
+    [SerializeField]
+    public List<TileScript> _n;
+    public List<TileScript> Neighbours
+    {
+        get => _n.Any() ? _n : _n = PathFindingComponent.GetallTileNeighbours(this);
+    }
     public GameObject UnitRef => AssetDatabase.LoadAssetAtPath<UnityEngine.Object>("Assets/Objects/Unit.prefab").GameObject();
 
-    SpriteRenderer spriteRenderer => GetComponent<SpriteRenderer>();
-    public List<TileScript> Neighbours;
-    TilePathFindingComponent _pathFindingComponent;
+    SpriteRenderer SpriteRenderer => GetComponent<SpriteRenderer>();
+    public TilePathFindingComponent PathFindingComponent => TryGetComponent<TilePathFindingComponent>(out var x) ? x : this.AddComponent<TilePathFindingComponent>();
 
     private UnitBase _u;
     public UnitBase UnitOnTile
@@ -31,15 +36,8 @@ public class TileScript : MonoBehaviour
 
     public BuildingBase BuildingOnTile;
 
-    bool IsSuitableForBuilding = false;
+    bool IsSuitableForBuilding => !IsNextToSea && Type == TileType.Land && Neighbours.Any(n => n.Type == TileType.City);
     public bool CurrntlyBuildAble => IsSuitableForBuilding || BuildingOnTile == null;
-    void Start()
-    {
-        _pathFindingComponent = this.AddComponent<TilePathFindingComponent>();
-        Neighbours = _pathFindingComponent.GetallTileNeighbours(this);
-
-        IsSuitableForBuilding = !IsNextToSea && Type == TileType.Land && Neighbours.Any(n => n.Type == TileType.City);
-    }
 
     [SerializeField]
     public bool IsCapital = false;
@@ -120,7 +118,7 @@ public class TileScript : MonoBehaviour
 
     private void IncreaseByScale(float scale)
     {
-        spriteRenderer.sortingOrder = 4;
+        SpriteRenderer.sortingOrder = 4;
         transform.Find("TeamShader").gameObject.GetComponent<SpriteRenderer>().sortingOrder = 5;
         transform.localScale = new Vector3(scale, scale, 1);
     }
@@ -133,34 +131,35 @@ public class TileScript : MonoBehaviour
 
                 if (IsCapital)
                 {
-                    spriteRenderer.sprite = GetSprite("CapitalTile");
+                    SpriteRenderer.sprite = GetSprite("CapitalTile");
                     IncreaseByScale(1.3f);
-                    break;
+                    return;
                 }
                 if (IsNextToSea)
                 {
-                    spriteRenderer.sprite = GetSprite("PortTile");
+                    SpriteRenderer.sprite = GetSprite("PortTile");
                     IncreaseByScale(1.1f);
-                    break;
+                    return;
                 }
-                spriteRenderer.sprite = GetSprite("CityTile");
+                SpriteRenderer.sprite = GetSprite("CityTile");
                 IncreaseByScale(1.1f);
-                break;
+                return;
 
             case TileType.Water:
 
-                spriteRenderer.sprite = GetSprite("WaterTile");
-                break;
+                SpriteRenderer.sprite = GetSprite("WaterTile");
+                return;
 
             case TileType.Land:
 
-                spriteRenderer.sprite = GetSprite("GrassTile"); ;
+                SpriteRenderer.sprite = GetSprite("GrassTile");
                 if (IsNextToSea)
                 {
                     transform.Find("Sand").gameObject.SetActive(true);
                     SetSeaBorder();
                 }
-                break;
+                return;
+
         }
     }
     private Sprite GetSprite(string spriteName)
@@ -173,10 +172,19 @@ public class TileScript : MonoBehaviour
     {
         TilePathFindingComponent.DirectionList.ForEach(direction =>
         {
-            if (_pathFindingComponent.GetNeighbour(this, direction).Type == TileType.Water)
+            if (PathFindingComponent.GetNeighbour(this, direction).Type == TileType.Water)
             {
                 transform.Find(direction.ToString()).gameObject.SetActive(true);
             }
         });
+
+        //var DirectionOffsets = PathFindingComponent.GetDirectionOffsets(this);
+        //foreach (var Neighbour in Neighbours)
+        //{
+        //    if (Neighbour.Type != TileType.Water) { continue; }
+
+        //    TilePathFindingComponent.Direction direction = DirectionOffsets.FirstOrDefault(x => x.Value == (Neighbour.GridLocation.x - GridLocation.x, Neighbour.GridLocation.y - GridLocation.y)).Key;
+        //    transform.Find(direction.ToString()).gameObject.SetActive(true);
+        //}
     }
 }

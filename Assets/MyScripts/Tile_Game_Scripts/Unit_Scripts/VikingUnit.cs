@@ -36,7 +36,10 @@ public class VikingUnit : UnitBase
 
     private void Start()
     {
-        TextComponent = transform.Find("Text").gameObject.GetComponent<TextMeshPro>();
+        GameObject textChild = transform.Find("Text").gameObject;
+        textChild.SetActive(true);
+        TextComponent = textChild.GetComponent<TextMeshPro>();
+
         SetUpChildColliderCircle(nameof(VikingChildCollider));
         StartCoroutine(VikingOverallCoroutine());
         GameController gameController = FindObjectOfType<GameController>();

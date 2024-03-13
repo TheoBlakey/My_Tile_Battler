@@ -1,5 +1,5 @@
 class Farmbuilding : BuildingBase
 {
-    public override string SpriteLandName => "FarmBuilding";
+    public override string SpriteLandName => "Farm";
 
 }

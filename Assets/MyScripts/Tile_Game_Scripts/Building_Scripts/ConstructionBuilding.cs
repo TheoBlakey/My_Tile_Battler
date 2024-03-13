@@ -3,7 +3,7 @@ using UnityEngine;
 
 class ConstructionBuilding : BuildingBase
 {
-    public override string SpriteLandName => "ConstructionBuilding";
+    public override string SpriteLandName => "Construction";
     public string BuildingToMake;
     void Start()
     {

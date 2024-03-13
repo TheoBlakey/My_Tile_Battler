@@ -32,11 +32,26 @@ public class HexTileBoardGenerator : MonoBehaviour
     public DateTime startTime;
     public void PrintTime(string message)
     {
-        return;
+        //return;
         var newTime = DateTime.Now;
-        print(message + " : " + (newTime - startTime).TotalMilliseconds);
+        print(message + " : " + (newTime - startTime).TotalSeconds);
         startTime = newTime;
     }
+
+    //public void GenerateMap()
+    //{
+    //    StartCoroutine(GenerateMapCoroutine());
+    //}
+    //List<int> coroutinesRunning = new();
+
+    //public IEnumerator SetUpComponents(TileScript tile, int index)
+    //{
+    //    coroutinesRunning.Add(index);
+    //    tile.SetUpComponents();
+    //    yield return null;
+    //    coroutinesRunning.Remove(index);
+    //}
+
 
     public void GenerateMap()
     {
@@ -55,8 +70,12 @@ public class HexTileBoardGenerator : MonoBehaviour
         List<TileScript> LandTiles = LandCoordinates.Select(i => GenerateTileObject(i, TileScript.TileType.Land)).ToList();
         List<TileScript> AllTiles = WaterTiles.Union(LandTiles).ToList();
 
+
         var gameController = FindObjectsOfType<GameController>().FirstOrDefault();
         gameController.FullTileList = AllTiles;
+
+        //AllTiles.ForEach(t => t.SetUpComponents());
+
         //gameController.TeamList = Enumerable.Range(1, PlayerNumber).ToList();
 
         int NUMBEROFCOSALCITIES = LandTiles.Count / 40; //50
@@ -67,12 +86,14 @@ public class HexTileBoardGenerator : MonoBehaviour
 
 
         List<TileScript> landCities = ChooseSpacedCities(NUMBEROFLANDCITES, LandTiles, false);
+        PrintTime("Citylandfind");
         List<TileScript> landAndCostalCities = ChooseSpacedCities(NUMBEROFCOSALCITIES, LandTiles, true, landCities.ToList());
 
+        PrintTime("CityBothFind");
         TileScript furthestCity = FindFurthestCity(landCities, landCities);
         List<TileScript> teamCities = new() { furthestCity };
 
-
+        PrintTime("City2");
         float averageDistance = landCities.SelectMany(city1 =>
                   landCities.Where(city2 => city1 != city2)
                   .Select(city2 => Vector3.Distance(city1.transform.position, city2.transform.position)))
@@ -82,7 +103,7 @@ public class HexTileBoardGenerator : MonoBehaviour
         {
             teamCities.Add(FindFurthestCityNotTooClose(landCities, teamCities, averageDistance));
         }
-
+        PrintTime("City3");
         teamCities = teamCities.OrderBy(x => UnityEngine.Random.value).ToList(); //shuffle
         int teamNo = 1;
         teamCities.ForEach(c =>
@@ -91,7 +112,7 @@ public class HexTileBoardGenerator : MonoBehaviour
             c.IsCapital = true;
         });
 
-        PrintTime("After city finding"); //2230
+        PrintTime("City4"); //2230
 
 
         AllTiles.ForEach(x => x.CalculateSprite());
@@ -99,6 +120,7 @@ public class HexTileBoardGenerator : MonoBehaviour
 
         PrintTime("END TIME"); ; //7491 --> 4734 -->
     }
+
     public List<Vector2Int> GenerateWholeMapPositions(List<Vector2Int> LandCoordinates, int extraWater)
     {
         int maxX = LandCoordinates.Max(p => p.x) + extraWater;
@@ -193,7 +215,7 @@ public class HexTileBoardGenerator : MonoBehaviour
 
     private List<TileScript> ChooseSpacedCities(int numberOfCites, List<TileScript> grassTiles, bool shouldBeNextToSea, List<TileScript> startingCityList = null)
     {
-        int randomEffort = 50;
+        int randomEffort = 5; //50
         List<TileScript> completeCitiesList = startingCityList ?? new List<TileScript>();
 
         for (int i = 0; i < numberOfCites; i++)
@@ -228,5 +250,7 @@ public class HexTileBoardGenerator : MonoBehaviour
         }
         return completeCitiesList;
     }
+
+
 
 }

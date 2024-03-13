@@ -7,7 +7,7 @@ using UnityEngine;
 public class TilePathFindingComponent : MonoBehaviour
 {
 
-    private List<TileScript> FullTileList;
+    private List<TileScript> FullTileList => FindObjectOfType<GameController>().FullTileList;
 
     private readonly int LANDMOVEMENT = 4; //2
     private readonly int WATERMOVEMENT = 6; //4
@@ -15,11 +15,11 @@ public class TilePathFindingComponent : MonoBehaviour
     public enum Direction { N, NE, NW, S, SE, SW }
     public static List<Direction> DirectionList => new((Direction[])Enum.GetValues(typeof(Direction)));
 
-    private void Start()
-    {
-        GameController gameController = FindObjectOfType<GameController>();
-        FullTileList = gameController.FullTileList;
-    }
+    //private void Start()
+    //{
+    //    GameController gameController = FindObjectOfType<GameController>();
+    //    FullTileList = gameController.FullTileList;
+    //}
 
 
     public List<TileScript> GetPossibleMovementsForUnit(TileScript OriginalTile, bool AllowTeamOverlap = false)
@@ -130,12 +130,24 @@ public class TilePathFindingComponent : MonoBehaviour
 
     public List<TileScript> GetallTileNeighbours(TileScript OriginalTile)
     {
-        return DirectionList.Select(e => GetNeighbour(OriginalTile, e)).ToList();
+        return DirectionList
+            .Select(e => GetNeighbour(OriginalTile, e))
+             .Where(neighbour => neighbour != null)
+               .ToList();
     }
 
     public TileScript GetNeighbour(TileScript originalTile, Direction direction)
     {
-        Dictionary<Direction, (int xOffset, int yOffset)> directionOffsets = new Dictionary<Direction, (int, int)>
+        var (xOffset, yOffset) = GetDirectionOffsets(originalTile)[direction];
+
+        return FullTileList.FirstOrDefault(x =>
+            x.GridLocation.x == originalTile.GridLocation.x + xOffset &&
+            x.GridLocation.y == originalTile.GridLocation.y + yOffset);
+    }
+
+    public Dictionary<Direction, (int, int)> GetDirectionOffsets(TileScript originalTile)
+    {
+        return new Dictionary<Direction, (int, int)>
     {
         { Direction.N, (0, 1) },
         { Direction.NE, (1, originalTile.GridLocation.x % 2 == 0 ? 1 : 0) },
@@ -144,12 +156,7 @@ public class TilePathFindingComponent : MonoBehaviour
         { Direction.SE, (1, originalTile.GridLocation.x % 2 == 0 ? 0 : -1) },
         { Direction.SW, (-1, originalTile.GridLocation.x % 2 == 0 ? 0 : -1) }
     };
-
-        var (xOffset, yOffset) = directionOffsets[direction];
-
-        return FullTileList.FirstOrDefault(x =>
-            x.GridLocation.x == originalTile.GridLocation.x + xOffset &&
-            x.GridLocation.y == originalTile.GridLocation.y + yOffset);
+        //return originalTile.GridLocation.x % 2 == 0 ? Constants.DirectionOffsetsEven : Constants.DirectionOffsetsOdd;
     }
 
     public List<TileScript> GetSimpleOptimumPath(TileScript startTile, TileScript endTile)

@@ -3,7 +3,7 @@ using UnityEngine;
 
 class BarracksBuilding : BuildingBase
 {
-    public override string SpriteLandName => "BarracksBuilding";
+    public override string SpriteLandName => "Barracks";
     public bool busy = false;
     bool readyToCreate = false;
 

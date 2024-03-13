@@ -45,7 +45,9 @@ public class CityComponent : MonoBehaviour
     {
         tileScript = GetComponent<TileScript>();
         StartCoroutine(CountIncrease());
-        TextComponent = transform.Find("Text").gameObject.GetComponent<TextMeshPro>();
+        GameObject textChild = transform.Find("Text").gameObject;
+        textChild.SetActive(true);
+        TextComponent = textChild.GetComponent<TextMeshPro>();
         Creator = this.AddComponent<CreateUnitOrBuildingComponent>();
 
     }
