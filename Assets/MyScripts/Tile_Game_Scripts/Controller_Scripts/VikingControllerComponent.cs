@@ -1,18 +1,23 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
-public class VikingControllerComponent : MonoBehaviour
+public class VikingControllerComponent : ComponentCacher
 {
-    List<TileScript> TilesToMakeUnits;
-    GameController GameController;
+    List<TileScript> _wt = new();
+    List<TileScript> AllEdgeWaterTiles
+    {
+        get => _wt.Any() ? _wt : _wt = GameController.FullTileList.Where(t => t.Type == TileScript.TileType.Water && t.Neighbours.Count < 6).ToList();
+    }
+    GameController GameController => CreateOrGetComponent<GameController>();
+    CreateUnitOrBuildingComponent Creator => CreateOrGetComponent<CreateUnitOrBuildingComponent>();
 
     void Start()
     {
-        GameController = GetComponent<GameController>();
-        StartCoroutine(SpawnVikings());
+        StartCoroutine(SpawnVikingsRepeating());
     }
-    IEnumerator SpawnVikings()
+    IEnumerator SpawnVikingsRepeating()
     {
         while (true)
         {
@@ -22,10 +27,11 @@ public class VikingControllerComponent : MonoBehaviour
 
         }
     }
+    List<TileScript> TilesToMakeUnits;
     void CreateUnits()
     {
         TilesToMakeUnits.ForEach(Tile =>
-            GameController.Creator.CreateUnitOrBuilding(5, Tile, nameof(VikingUnit))
+           Creator.CreateUnitOrBuilding(5, Tile, nameof(VikingUnit))
         );
     }
 
@@ -43,12 +49,12 @@ public class VikingControllerComponent : MonoBehaviour
 
     TileScript RandomNonChosenTile()
     {
-        TileScript RandomTile = new();
 
+        TileScript RandomTile;
         while (true)
         {
-            int randomIndex = Random.Range(0, TilesToMakeUnits.Count);
-            RandomTile = TilesToMakeUnits[randomIndex];
+            int randomIndex = Random.Range(0, AllEdgeWaterTiles.Count);
+            RandomTile = AllEdgeWaterTiles[randomIndex];
 
             if (IsValidTile(RandomTile))
             {
@@ -73,14 +79,7 @@ public class VikingControllerComponent : MonoBehaviour
 
         float distance = Vector2.Distance(firstTile.transform.position, tile.transform.position);
 
-        if (distance < 2)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        return distance < 2;
     }
 
 }

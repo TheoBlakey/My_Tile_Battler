@@ -1,12 +1,9 @@
 using UnityEngine;
 
-public class VikingChildCollider : MonoBehaviour
+public class VikingChildCollider : ComponentCacher
 {
-    VikingUnit parentUnit;
-    private void Start()
-    {
-        parentUnit = GetComponent<VikingUnit>();
-    }
+    VikingUnit parentUnit => CreateOrGetComponent<VikingUnit>();
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.TryGetComponent<TeamUnit>(out var u))

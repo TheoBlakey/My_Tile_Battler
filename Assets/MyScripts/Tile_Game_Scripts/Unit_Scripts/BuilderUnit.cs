@@ -3,6 +3,7 @@ using UnityEngine;
 public class BuilderUnit : TeamUnit
 {
     public override string SpriteLandName => "builder_unit";
+    CreateUnitOrBuildingComponent Creator => CreateOrGetComponent<CreateUnitOrBuildingComponent>();
 
     public void TryCreateBuilding(string buildingName)
     {

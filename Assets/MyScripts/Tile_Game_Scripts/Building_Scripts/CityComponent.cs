@@ -2,14 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 
-public class CityComponent : MonoBehaviour
+public class CityComponent : ComponentCacher
 {
-    TileScript tileScript;
-    TextMeshPro TextComponent;
-    CreateUnitOrBuildingComponent Creator;
+    TileScript TileScript => CreateOrGetComponent<TileScript>();
+    TextMeshPro TextComponent => CreateOrGetComponent<TextMeshPro>("Text");
+    CreateUnitOrBuildingComponent Creator => CreateOrGetComponent<CreateUnitOrBuildingComponent>();
+
 
     int _c = 0;
     private int Counter
@@ -20,7 +20,7 @@ public class CityComponent : MonoBehaviour
             _c = value;
             if (_c == RequiredAmount)
             {
-                Creator.CreateUnitOrBuilding(tileScript.Team, tileScript, nameof(BuilderUnit));
+                Creator.CreateUnitOrBuilding(TileScript.Team, TileScript, nameof(BuilderUnit));
                 _c = 0;
             }
             CalculateText();
@@ -36,20 +36,14 @@ public class CityComponent : MonoBehaviour
         }
     }
 
-    List<TileScript> FarmNeighbours => tileScript
+    List<TileScript> FarmNeighbours => TileScript
      .Neighbours.Where(t =>
          t.GetComponent<Farmbuilding>() != null)
      .ToList();
 
-    void Start()
+    public void Start()
     {
-        tileScript = GetComponent<TileScript>();
         StartCoroutine(CountIncrease());
-        GameObject textChild = transform.Find("Text").gameObject;
-        textChild.SetActive(true);
-        TextComponent = textChild.GetComponent<TextMeshPro>();
-        Creator = this.AddComponent<CreateUnitOrBuildingComponent>();
-
     }
 
     void CalculateText()
@@ -72,7 +66,7 @@ public class CityComponent : MonoBehaviour
     void HideText(bool On)
     {
         Color temp = TextComponent.color;
-        temp.a = On ? 1 : 0;
+        temp.a = On ? 0 : 1;
         TextComponent.color = temp;
     }
 }

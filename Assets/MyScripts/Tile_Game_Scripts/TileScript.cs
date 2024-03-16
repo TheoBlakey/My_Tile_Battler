@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEngine;
 
 [Serializable()]
-public class TileScript : MonoBehaviour
+public class TileScript : ComponentCacher
 {
     [SerializeField]
     public List<TileScript> _n;
@@ -14,11 +14,8 @@ public class TileScript : MonoBehaviour
     {
         get => _n.Any() ? _n : _n = PathFindingComponent.GetallTileNeighbours(this);
     }
-    public GameObject UnitRef => AssetDatabase.LoadAssetAtPath<UnityEngine.Object>("Assets/Objects/Unit.prefab").GameObject();
-
-    SpriteRenderer SpriteRenderer => GetComponent<SpriteRenderer>();
-    public TilePathFindingComponent PathFindingComponent => TryGetComponent<TilePathFindingComponent>(out var x) ? x : this.AddComponent<TilePathFindingComponent>();
-
+    SpriteRenderer SpriteRenderer => CreateOrGetComponent<SpriteRenderer>();
+    TilePathFindingComponent PathFindingComponent => CreateOrGetComponent<TilePathFindingComponent>();
     private UnitBase _u;
     public UnitBase UnitOnTile
     {
@@ -26,15 +23,33 @@ public class TileScript : MonoBehaviour
         set
         {
             _u = value;
+
+            bool isAUnitThere = value != null;
+
+            if (isAUnitThere && Type == TileType.City)
+            {
+                Team = value.Team;
+            }
+
             if (TryGetComponent<CityComponent>(out var city))
             {
-                city.IsUnitOnTile = value != null;
+                city.IsUnitOnTile = isAUnitThere;
             }
 
         }
     }
 
-    public BuildingBase BuildingOnTile;
+    private BuildingBase _bot;
+    public BuildingBase BuildingOnTile
+    {
+        get => _bot;
+        set
+        {
+            _bot = value;
+            int TeamNum = value != null ? value.Team : 0;
+            Team = TeamNum;
+        }
+    }
 
     bool IsSuitableForBuilding => !IsNextToSea && Type == TileType.Land && Neighbours.Any(n => n.Type == TileType.City);
     public bool CurrntlyBuildAble => IsSuitableForBuilding || BuildingOnTile == null;
@@ -62,10 +77,6 @@ public class TileScript : MonoBehaviour
 
             _t = value;
 
-
-            ShadeCities();
-
-
             if (TryGetComponent<CityComponent>(out var city))
             {
                 Destroy(city);
@@ -75,20 +86,24 @@ public class TileScript : MonoBehaviour
             {
                 this.AddComponent<CityComponent>();
             }
+            TeamShadeTile(value);
         }
     }
 
-    void ShadeCities()
+    void TeamShadeTile(int teamArrived)
     {
-        Color c = TileColorList[Team];
-        if (Type == TileType.City)
+        Color c = TileColorList[teamArrived];
+        switch ((Type, IsCapital))
         {
-            c.a = 0.25f;
-            //c.a = 0.75f;
-        }
-        if (IsCapital)
-        {
-            c.a = 0.125f;
+            case (_, true):
+                c.a = 0.125f;
+                break;
+            case (TileType.Land, _):
+                c.a = 0.20f;
+                break;
+            case (TileType.City, _):
+                c.a = 0.25f;
+                break;
         }
         TeamShader.GetComponent<SpriteRenderer>().color = c;
     }

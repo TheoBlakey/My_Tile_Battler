@@ -6,6 +6,7 @@ public abstract class TeamUnit : UnitBase
 
     private void Start()
     {
+        base.Start();
         this.AddComponent<DestroyedByVikingComponent>();
         unitShouldShadeOnPause = true;
     }

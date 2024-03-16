@@ -15,13 +15,6 @@ public class TilePathFindingComponent : MonoBehaviour
     public enum Direction { N, NE, NW, S, SE, SW }
     public static List<Direction> DirectionList => new((Direction[])Enum.GetValues(typeof(Direction)));
 
-    //private void Start()
-    //{
-    //    GameController gameController = FindObjectOfType<GameController>();
-    //    FullTileList = gameController.FullTileList;
-    //}
-
-
     public List<TileScript> GetPossibleMovementsForUnit(TileScript OriginalTile, bool AllowTeamOverlap = false)
     {
         bool isPort = OriginalTile.IsNextToSea && OriginalTile.Type == TileScript.TileType.City;

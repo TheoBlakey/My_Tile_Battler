@@ -3,12 +3,13 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-public class PlayerControllerComponent : MonoBehaviour
+public class PlayerControllerComponent : ComponentCacher
 {
-    TilePathFindingComponent PathFindingComponent;
+    TilePathFindingComponent PathFindingComponent => CreateOrGetComponent<TilePathFindingComponent>();
+    new Camera camera;
     private void Start()
     {
-        PathFindingComponent = GetComponent<TilePathFindingComponent>();
+        camera = FindObjectOfType<Camera>().GetComponent<Camera>();
     }
 
     private TileScript _st = null;
@@ -73,10 +74,9 @@ public class PlayerControllerComponent : MonoBehaviour
         SelectedTileWithUnit = null;
     }
 
-
     private void PerformTileSelection()
     {
-        var camera = GetComponent<Camera>();
+
         Vector3 mouseInput = camera.ScreenToWorldPoint(Input.mousePosition);
         mouseInput.z = 0f;
 

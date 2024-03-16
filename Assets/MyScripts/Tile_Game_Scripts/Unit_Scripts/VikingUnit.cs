@@ -9,7 +9,7 @@ public class VikingUnit : UnitBase
     public override string SpriteLandName => "boat";
     public override string SpriteWaterName => "light_unit";
 
-    TextMeshPro TextComponent;
+    TextMeshPro TextComponent => CreateOrGetComponent<TextMeshPro>("Text");
 
     private int _h = 10;
     public int Health
@@ -23,27 +23,33 @@ public class VikingUnit : UnitBase
             _h = value;
         }
     }
-    GameController gameController;
+
+    List<TileScript> _ac = new();
+    List<TileScript> AllCities
+    {
+        get => _ac.Any() ? _ac : FindAnyObjectByType<GameController>().AllCities;
+    }
+
 
 
     public List<TeamUnit> closeUnits;
 
     public List<BuildingBase> closeBuildings;
     public TileScript CurrentTargetCity;
-    List<TileScript> CurrentEnemyCitiesTiles => gameController.AllCities.
+    List<TileScript> CurrentEnemyCitiesTiles => AllCities.
         Where(c => c.Team != 0 || c.Team != 5).
         ToList();
 
     private void Start()
     {
-        GameObject textChild = transform.Find("Text").gameObject;
-        textChild.SetActive(true);
-        TextComponent = textChild.GetComponent<TextMeshPro>();
+        base.Start();
+
+        var c = TextComponent.color;
+        c.a = 1;
+        TextComponent.color = c;
 
         SetUpChildColliderCircle(nameof(VikingChildCollider));
         StartCoroutine(VikingOverallCoroutine());
-        GameController gameController = FindObjectOfType<GameController>();
-
     }
     IEnumerator VikingOverallCoroutine()
     {

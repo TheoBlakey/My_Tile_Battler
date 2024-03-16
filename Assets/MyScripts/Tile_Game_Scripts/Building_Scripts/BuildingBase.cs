@@ -1,10 +1,10 @@
-using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
-public abstract class BuildingBase : MonoBehaviour, ITeamTileInterface
+public abstract class BuildingBase : ComponentCacher, ITeamTileInterface
 {
-    public ShadedOutComponent shadedOutComponent;
+    public ShadedOutComponent shadedOutComponent => CreateOrGetComponent<ShadedOutComponent>();
+    public CreateUnitOrBuildingComponent Creator => CreateOrGetComponent<CreateUnitOrBuildingComponent>();
     public abstract string SpriteLandName { get; }
     private TileScript _ts;
     public TileScript TileOn
@@ -17,16 +17,13 @@ public abstract class BuildingBase : MonoBehaviour, ITeamTileInterface
 
         }
     }
-    public CreateUnitOrBuildingComponent Creator;
 
     public int Team { get; set; }
 
-    private void Start()
+    public void Start()
     {
-        this.AddComponent<DestroyedByVikingComponent>();
-        shadedOutComponent = this.AddComponent<ShadedOutComponent>();
+        gameObject.AddComponent<DestroyedByVikingComponent>();
         CalculateSprite();
-        Creator = this.AddComponent<CreateUnitOrBuildingComponent>();
     }
 
     void CalculateSprite()

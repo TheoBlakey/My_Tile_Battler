@@ -2,42 +2,33 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
-public abstract class UnitBase : MonoBehaviour, ITeamTileInterface
+public abstract class UnitBase : ComponentCacher, ITeamTileInterface
 {
-    Color ogColor;
-    public GameObject FightEffect_Ref => AssetDatabase.LoadAssetAtPath<UnityEngine.Object>("Assets/Objects/Fight_Effect.prefab").GameObject();
+    SpriteRenderer SpriteRenderer => CreateOrGetComponent<SpriteRenderer>();
+    SpriteRenderer TeamShaderSpriteRenderer => CreateOrGetComponent<SpriteRenderer>("TeamShader");
+    ShadedOutComponent shadedOutComponent => CreateOrGetComponent<ShadedOutComponent>();
+    public TilePathFindingComponent tilePathFindingComponent => CreateOrGetComponent<TilePathFindingComponent>();
 
-    SpriteRenderer SpriteRenderer => GetComponent<SpriteRenderer>();
-    SpriteRenderer TeamShaderSpriteRenderer => transform.Find("TeamShader").gameObject.GetComponent<SpriteRenderer>();
 
     TileScript TileTravellingTo = null;
     public bool IsTravelling => TileTravellingTo != null;
-
-
-    ShadedOutComponent shadedOutComponent;
-    public TilePathFindingComponent tilePathFindingComponent;
-    public CreateUnitOrBuildingComponent Creator;
-
-    private void Start()
+    public void Start()
     {
-        shadedOutComponent = this.AddComponent<ShadedOutComponent>();
-        tilePathFindingComponent = this.AddComponent<TilePathFindingComponent>();
         CalculateSprite();
         AddCollider();
-        Creator = this.AddComponent<CreateUnitOrBuildingComponent>();
     }
 
     private void AddCollider()
     {
-        gameObject.AddComponent<Rigidbody2D>();
-        BoxCollider unitCollider = gameObject.AddComponent<BoxCollider>();
+        Rigidbody2D body = gameObject.AddComponent<Rigidbody2D>();
+        body.isKinematic = true;
+        BoxCollider2D unitCollider = gameObject.AddComponent<BoxCollider2D>();
         unitCollider.isTrigger = true;
 
-        Vector3 spriteSize = SpriteRenderer.bounds.size;
+        Vector3 spriteSize = SpriteRenderer.sprite.bounds.size;
         unitCollider.size = spriteSize;
     }
 
@@ -126,21 +117,26 @@ public abstract class UnitBase : MonoBehaviour, ITeamTileInterface
     {
         yield return PerfromMovementAnimation();
         //Movement Finished
-        TileOn = TileTravellingTo = null;
+        TileOn = TileTravellingTo;
+        TileTravellingTo = null;
         //CaputreSurroundingTiles();
         StartCoroutine(PauseUnitForTime(movementPauseTime));
     }
-    bool PerfromMovementAnimation()
+    IEnumerator PerfromMovementAnimation()
     {
-        while (TileTravellingTo.transform.position != transform.position)
+        while (true)
         {
+            yield return new WaitForSeconds(0.01f);
+
             MoveObject();
-            if (Vector2.Distance(transform.position, TileTravellingTo.transform.position) < 0.005f) //0.01
+            if (Vector2.Distance(transform.position, TileTravellingTo.transform.position) < 0.01f) //0.01
             {
-                this.transform.position = TileTravellingTo.transform.position;
+                transform.position = TileTravellingTo.transform.position;
+                break;
             }
         }
-        return true;
+
+        yield return true;
     }
 
     void MoveObject()

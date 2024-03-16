@@ -14,6 +14,7 @@ public class ArcherUnit : TeamUnit
     bool canShoot = true;
     private void Start()
     {
+        base.Start();
         SetUpChildColliderCircle(nameof(ArcherChildCollider));
     }
 

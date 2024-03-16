@@ -1,17 +1,14 @@
 using UnityEngine;
 
-public class ArcherChildCollider : MonoBehaviour
+public class ArcherChildCollider : ComponentCacher
 {
-    ArcherUnit parentUnit;
-    private void Start()
-    {
-        parentUnit = GetComponent<ArcherUnit>();
-    }
+    ArcherUnit ParentUnit => CreateOrGetComponent<ArcherUnit>();
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.TryGetComponent<VikingUnit>(out var vikingUnit))
         {
-            parentUnit.VikingUnitList.Add(vikingUnit);
+            ParentUnit.VikingUnitList.Add(vikingUnit);
         }
     }
 
@@ -19,7 +16,7 @@ public class ArcherChildCollider : MonoBehaviour
     {
         if (collision.TryGetComponent<VikingUnit>(out var vikingUnit))
         {
-            parentUnit.VikingUnitList.Remove(vikingUnit);
+            ParentUnit.VikingUnitList.Remove(vikingUnit);
         }
     }
 

@@ -7,6 +7,7 @@ class ConstructionBuilding : BuildingBase
     public string BuildingToMake;
     void Start()
     {
+        base.Start();
         shadedOutComponent.ShadedOut = true;
         StartCoroutine(ConstructBuilding());
     }

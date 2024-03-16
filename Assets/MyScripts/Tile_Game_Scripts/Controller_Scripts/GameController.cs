@@ -1,9 +1,9 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEngine;
 
-public class GameController : MonoBehaviour
+public class GameController : ComponentCacher
 {
 
     [SerializeField]
@@ -12,26 +12,29 @@ public class GameController : MonoBehaviour
     public List<TileScript> AllCities;
     public List<TileScript> AllEdgeWaterTilese;
 
-    public CreateUnitOrBuildingComponent Creator;
-    void GenerateStartingUnits()
+    CreateUnitOrBuildingComponent Creator => CreateOrGetComponent<CreateUnitOrBuildingComponent>();
+    IEnumerator GenerateStartingUnits()
     {
+        yield return new WaitForSeconds(0.1f);
         foreach (TileScript tile in AllCities)
         {
             if (tile.Team == 0) continue;
-            Creator.CreateUnitOrBuilding(tile.Team, tile, nameof(BuilderUnit));
+
+            int ogTeam = tile.Team;
+            tile.Team = 0;
+            Destroy(tile.GetComponent<CityComponent>());
+            Creator.CreateUnitOrBuilding(ogTeam, tile, nameof(BuilderUnit));
         }
     }
 
     void Start()
     {
         AllCities = FullTileList.Where(t => t.Type == TileScript.TileType.City).ToList();
-        Creator = this.AddComponent<CreateUnitOrBuildingComponent>();
-        GenerateStartingUnits();
 
-        this.AddComponent<PlayerControllerComponent>();
-        this.AddComponent<VikingControllerComponent>();
+        gameObject.AddComponent<PlayerControllerComponent>();
+        //gameObject.AddComponent<VikingControllerComponent>();
 
-        AllEdgeWaterTilese = FullTileList.Where(t => t.Neighbours.Count < 6).ToList();
+        StartCoroutine(GenerateStartingUnits());
     }
 
 

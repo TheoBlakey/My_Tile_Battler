@@ -1,29 +1,20 @@
 using UnityEngine;
 
-public class ShadedOutComponent : MonoBehaviour
+public class ShadedOutComponent : ComponentCacher
 {
-    private Color ogColor;
-    private bool _so = false;
-    SpriteRenderer SpriteRenderer;
+    private Color ogColor = default;
+    SpriteRenderer SpriteRenderer => CreateOrGetComponent<SpriteRenderer>();
 
-    private void Start()
-    {
-        SpriteRenderer = GetComponent<SpriteRenderer>();
-    }
+    private bool _so = false;
     public bool ShadedOut
     {
         get => _so;
         set
         {
+            if (SpriteRenderer.color == default) { ogColor = SpriteRenderer.color; }
+
             _so = value;
-            if (value)
-            {
-                ogColor = SpriteRenderer.color = Color.black;
-            }
-            else
-            {
-                SpriteRenderer.color = ogColor;
-            }
+            SpriteRenderer.color = value ? Color.black : ogColor;
         }
     }
 
