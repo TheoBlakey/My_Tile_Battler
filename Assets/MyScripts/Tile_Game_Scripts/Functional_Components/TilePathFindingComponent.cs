@@ -7,7 +7,8 @@ using UnityEngine;
 public class TilePathFindingComponent : MonoBehaviour
 {
 
-    private List<TileScript> FullTileList => FindObjectOfType<GameController>().FullTileList;
+    private List<TileScript> _ftl = new();
+    private List<TileScript> FullTileList => _ftl.Any() ? _ftl : _ftl = FindObjectOfType<GameController>().FullTileList;
 
     private readonly int LANDMOVEMENT = 4; //2
     private readonly int WATERMOVEMENT = 6; //4

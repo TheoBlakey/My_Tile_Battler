@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 
-public class HexTileBoardGenerator : MonoBehaviour
+public class HexTileBoardGenerator : ComponentCacher
 {
     //og IslandSize = 10;
     //og MapSize = 70;
@@ -15,11 +14,10 @@ public class HexTileBoardGenerator : MonoBehaviour
 
     //private int AverageIslandSize => MapSize / 5;
 
-    public GameObject _hexTileRefFromPath;
-    public GameObject HexTileRefFromPath
-    {
-        get => _hexTileRefFromPath != null ? _hexTileRefFromPath : _hexTileRefFromPath = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>("Assets/Objects/Hex_Tile.prefab").GameObject();
-    }
+    public GameObject HexTileRefFromPath => LoadPrefab("Hex_Tile");
+    //{
+    //    get => _hexTileRefFromPath != null ? _hexTileRefFromPath : _hexTileRefFromPath = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>("Assets/Objects/Hex_Tile.prefab").GameObject();
+    //}
 
     public void ClearMap()
     {
@@ -27,6 +25,10 @@ public class HexTileBoardGenerator : MonoBehaviour
          .Where(go => go != null && go.activeInHierarchy && go.name.Contains("(Clone)"))
          .ToList()
          .ForEach(DestroyImmediate);
+
+        landCities = new();
+        costalCities = new();
+        landAndCostalCities = new();
     }
 
     public DateTime startTime;
@@ -37,20 +39,6 @@ public class HexTileBoardGenerator : MonoBehaviour
         print(message + " : " + (newTime - startTime).TotalSeconds);
         startTime = newTime;
     }
-
-    //public void GenerateMap()
-    //{
-    //    StartCoroutine(GenerateMapCoroutine());
-    //}
-    //List<int> coroutinesRunning = new();
-
-    //public IEnumerator SetUpComponents(TileScript tile, int index)
-    //{
-    //    coroutinesRunning.Add(index);
-    //    tile.SetUpComponents();
-    //    yield return null;
-    //    coroutinesRunning.Remove(index);
-    //}
 
 
     public void GenerateMap()
@@ -70,9 +58,11 @@ public class HexTileBoardGenerator : MonoBehaviour
         List<TileScript> LandTiles = LandCoordinates.Select(i => GenerateTileObject(i, TileScript.TileType.Land)).ToList();
         List<TileScript> AllTiles = WaterTiles.Union(LandTiles).ToList();
 
-
-        var gameController = FindObjectsOfType<GameController>().FirstOrDefault();
+        var gameController = FindObjectOfType<GameController>(); //REQUIRED FOR PATHFINDING, DO NOT MOVE
         gameController.FullTileList = AllTiles;
+        gameController.AllWaterTiles = WaterTiles;
+
+
 
         //AllTiles.ForEach(t => t.SetUpComponents());
 
@@ -85,11 +75,14 @@ public class HexTileBoardGenerator : MonoBehaviour
         PrintTime("After Tile Generation"); //754
 
 
-        List<TileScript> landCities = ChooseSpacedCities(NUMBEROFLANDCITES, LandTiles, false);
-        PrintTime("Citylandfind");
-        List<TileScript> landAndCostalCities = ChooseSpacedCities(NUMBEROFCOSALCITIES, LandTiles, true, landCities.ToList());
+        //List<TileScript> landCities = ChooseSpacedCities(NUMBEROFLANDCITES, LandTiles, false);
+        //PrintTime("Citylandfind");
+        //List<TileScript> landAndCostalCities = ChooseSpacedCities(NUMBEROFCOSALCITIES, LandTiles, true, landCities.ToList());
 
-        PrintTime("CityBothFind");
+        ChooseSpacedImproved(NUMBEROFCOSALCITIES, NUMBEROFLANDCITES, LandTiles);
+
+        PrintTime("After Cites Found");
+
         TileScript furthestCity = FindFurthestCity(landCities, landCities);
         List<TileScript> teamCities = new() { furthestCity };
 
@@ -115,9 +108,12 @@ public class HexTileBoardGenerator : MonoBehaviour
         PrintTime("City4"); //2230
 
 
+
+        gameController.AllStartingTeamCities = teamCities;
+        gameController.AllCities = landAndCostalCities;
+        // end gamecontroller
+
         AllTiles.ForEach(x => x.CalculateSprite());
-
-
         PrintTime("END TIME"); ; //7491 --> 4734 -->
     }
 
@@ -251,6 +247,68 @@ public class HexTileBoardGenerator : MonoBehaviour
         return completeCitiesList;
     }
 
+    List<TileScript> landCities = new();
+    List<TileScript> costalCities = new();
+    List<TileScript> landAndCostalCities = new();
+    private void ChooseSpacedImproved(int numberOfLandCitesLeft, int numberOfCostalCitesLeft, List<TileScript> landTiles)
+    {
+        var grassTiles = landTiles.ToList();
+        TileScript firstCity = grassTiles[0];
+        CorrectAdd(firstCity, firstCity.IsNextToSea, grassTiles);
 
+        while (numberOfLandCitesLeft > 0 && numberOfCostalCitesLeft > 0)
+        {
+            var newCity = ChooseSufficientlyDistant(grassTiles);
+
+            bool cityNextToSea = newCity.IsNextToSea;
+            CorrectAdd(newCity, cityNextToSea, grassTiles);
+
+            if (cityNextToSea) { numberOfCostalCitesLeft--; } else { numberOfLandCitesLeft--; };
+
+        }
+
+        bool onlyCostalLeft = numberOfCostalCitesLeft > 0;
+        int thisManyCitiesLeft = onlyCostalLeft ? numberOfLandCitesLeft : numberOfLandCitesLeft;
+
+        for (int i = 0; i < thisManyCitiesLeft; i++)
+        {
+            var newCity = ChooseSufficientlyDistant(grassTiles, true, onlyCostalLeft);
+
+            CorrectAdd(newCity, onlyCostalLeft, grassTiles);
+
+            thisManyCitiesLeft--;
+        }
+
+    }
+
+    private void CorrectAdd(TileScript city, bool isCostal, List<TileScript> grassTiles)
+    {
+        grassTiles.Remove(city);
+        city.Type = TileScript.TileType.City;
+        if (isCostal) { costalCities.Add(city); } else { landCities.Add(city); }
+        landAndCostalCities.Add(city);
+    }
+
+    private TileScript ChooseSufficientlyDistant(List<TileScript> grassTiles, bool checkCostal = false, bool shouldBeCostal = false)
+    {
+        var distanceWeightings = new List<KeyValuePair<TileScript, float>>();
+        int grassTileCount = grassTiles.Count;
+
+        int randomNumberTries = 5; //50
+        for (int z = 0; z < randomNumberTries; z++)
+        {
+            TileScript randomGrassTile = grassTiles[UnityEngine.Random.Range(0, grassTiles.Count)];
+
+            if (checkCostal)
+            {
+                if (randomGrassTile.IsNextToSea != shouldBeCostal) { z--; continue; }
+            }
+
+            var closestDistance = landAndCostalCities.Select(s => Vector2.Distance(s.transform.position, randomGrassTile.transform.position)).ToList().Min();
+            distanceWeightings.Add(new KeyValuePair<TileScript, float>(randomGrassTile, closestDistance));
+        }
+
+        return distanceWeightings.OrderByDescending(i => i.Value).First().Key;
+    }
 
 }

@@ -3,8 +3,9 @@ using UnityEngine;
 
 public abstract class BuildingBase : ComponentCacher, ITeamTileInterface
 {
-    public ShadedOutComponent shadedOutComponent => CreateOrGetComponent<ShadedOutComponent>();
+    public ShadeOutComponent shadedOutComponent => CreateOrGetComponent<ShadeOutComponent>();
     public CreateUnitOrBuildingComponent Creator => CreateOrGetComponent<CreateUnitOrBuildingComponent>();
+    SpriteRenderer spriteRenderer => CreateOrGetComponent<SpriteRenderer>();
     public abstract string SpriteLandName { get; }
     private TileScript _ts;
     public TileScript TileOn
@@ -22,13 +23,9 @@ public abstract class BuildingBase : ComponentCacher, ITeamTileInterface
 
     public void Start()
     {
+        gameObject.AddComponent<SpriteSizeColliderComponent>();
         gameObject.AddComponent<DestroyedByVikingComponent>();
-        CalculateSprite();
-    }
-
-    void CalculateSprite()
-    {
-        GetComponent<SpriteRenderer>().sprite = GetSprite(SpriteLandName);
+        spriteRenderer.sprite = GetSprite(SpriteLandName);
     }
 
     private Sprite GetSprite(string spriteName)

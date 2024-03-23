@@ -4,7 +4,7 @@ public abstract class TeamUnit : UnitBase
 {
     public override string SpriteWaterName => "boat";
 
-    private void Start()
+    private new void Start()
     {
         base.Start();
         this.AddComponent<DestroyedByVikingComponent>();

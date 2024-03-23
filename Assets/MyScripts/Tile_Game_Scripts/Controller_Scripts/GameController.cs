@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public class GameController : ComponentCacher
@@ -8,18 +7,19 @@ public class GameController : ComponentCacher
 
     [SerializeField]
     public List<TileScript> FullTileList;
-
+    [SerializeField]
+    public List<TileScript> AllStartingTeamCities;
+    [SerializeField]
+    public List<TileScript> AllWaterTiles;
+    [SerializeField]
     public List<TileScript> AllCities;
-    public List<TileScript> AllEdgeWaterTilese;
 
     CreateUnitOrBuildingComponent Creator => CreateOrGetComponent<CreateUnitOrBuildingComponent>();
     IEnumerator GenerateStartingUnits()
     {
         yield return new WaitForSeconds(0.1f);
-        foreach (TileScript tile in AllCities)
+        foreach (TileScript tile in AllStartingTeamCities)
         {
-            if (tile.Team == 0) continue;
-
             int ogTeam = tile.Team;
             tile.Team = 0;
             Destroy(tile.GetComponent<CityComponent>());
@@ -29,8 +29,6 @@ public class GameController : ComponentCacher
 
     void Start()
     {
-        AllCities = FullTileList.Where(t => t.Type == TileScript.TileType.City).ToList();
-
         gameObject.AddComponent<PlayerControllerComponent>();
         //gameObject.AddComponent<VikingControllerComponent>();
 

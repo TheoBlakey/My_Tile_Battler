@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class Arrow : MonoBehaviour
@@ -6,12 +7,13 @@ public class Arrow : MonoBehaviour
 
     private void Start()
     {
-        gameObject.AddComponent<Rigidbody2D>();
-        BoxCollider unitCollider = gameObject.AddComponent<BoxCollider>();
-        unitCollider.isTrigger = true;
+        this.AddComponent<SpriteSizeColliderComponent>();
+        //gameObject.AddComponent<Rigidbody2D>();
+        //BoxCollider unitCollider = gameObject.AddComponent<BoxCollider>();
+        //unitCollider.isTrigger = true;
 
-        Vector3 spriteSize = GetComponent<SpriteRenderer>().bounds.size;
-        unitCollider.size = spriteSize;
+        //Vector3 spriteSize = GetComponent<SpriteRenderer>().bounds.size;
+        //unitCollider.size = spriteSize;
     }
     private void FixedUpdate()
     {

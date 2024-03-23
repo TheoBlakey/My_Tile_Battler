@@ -20,7 +20,7 @@ public class ArcherUnit : TeamUnit
 
     void ShootOneArrow(VikingUnit unit)
     {
-        Arrow arrow = Instantiate(Arrow_Ref, transform.position, new Quaternion()).GetComponent<Arrow>();
+        Arrow arrow = Instantiate(Arrow_Ref).GetComponent<Arrow>();
         arrow.UnitHeadingFor = unit;
     }
 

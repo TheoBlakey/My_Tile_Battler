@@ -9,28 +9,32 @@ public abstract class UnitBase : ComponentCacher, ITeamTileInterface
 {
     SpriteRenderer SpriteRenderer => CreateOrGetComponent<SpriteRenderer>();
     SpriteRenderer TeamShaderSpriteRenderer => CreateOrGetComponent<SpriteRenderer>("TeamShader");
-    ShadedOutComponent shadedOutComponent => CreateOrGetComponent<ShadedOutComponent>();
+    ShadeOutComponent shadedOutComponent => CreateOrGetComponent<ShadeOutComponent>();
     public TilePathFindingComponent tilePathFindingComponent => CreateOrGetComponent<TilePathFindingComponent>();
-
 
     TileScript TileTravellingTo = null;
     public bool IsTravelling => TileTravellingTo != null;
     public void Start()
     {
+        gameObject.AddComponent<SpriteSizeColliderComponent>();
         CalculateSprite();
-        AddCollider();
     }
 
-    private void AddCollider()
-    {
-        Rigidbody2D body = gameObject.AddComponent<Rigidbody2D>();
-        body.isKinematic = true;
-        BoxCollider2D unitCollider = gameObject.AddComponent<BoxCollider2D>();
-        unitCollider.isTrigger = true;
+    //public List<T> ComponentsOnStart<List<T>>() where T : Type
+    //{
+    //    return new List<T> { typeof(T) };
+    //}
 
-        Vector3 spriteSize = SpriteRenderer.sprite.bounds.size;
-        unitCollider.size = spriteSize;
-    }
+    //private void AddCollider()
+    //{
+    //    Rigidbody2D body = gameObject.AddComponent<Rigidbody2D>();
+    //    body.isKinematic = true;
+    //    BoxCollider2D unitCollider = gameObject.AddComponent<BoxCollider2D>();
+    //    unitCollider.isTrigger = true;
+
+    //    Vector3 spriteSize = SpriteRenderer.sprite.bounds.size;
+    //    unitCollider.size = spriteSize;
+    //}
 
     public abstract string SpriteLandName { get; }
     public abstract string SpriteWaterName { get; }

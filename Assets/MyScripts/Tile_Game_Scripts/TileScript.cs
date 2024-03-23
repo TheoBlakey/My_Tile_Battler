@@ -9,13 +9,13 @@ using UnityEngine;
 public class TileScript : ComponentCacher
 {
     [SerializeField]
-    public List<TileScript> _n;
-    public List<TileScript> Neighbours
-    {
-        get => _n.Any() ? _n : _n = PathFindingComponent.GetallTileNeighbours(this);
-    }
+    public List<TileScript> _n = new();
+    public List<TileScript> Neighbours => _n.Any() ? _n : _n = PathFindingComponent.GetallTileNeighbours(this);
+
     SpriteRenderer SpriteRenderer => CreateOrGetComponent<SpriteRenderer>();
     TilePathFindingComponent PathFindingComponent => CreateOrGetComponent<TilePathFindingComponent>();
+    SpriteRenderer TeamShaderSpriteRenderer => CreateOrGetComponent<SpriteRenderer>("TeamShader");
+
     private UnitBase _u;
     public UnitBase UnitOnTile
     {
@@ -51,8 +51,8 @@ public class TileScript : ComponentCacher
         }
     }
 
-    bool IsSuitableForBuilding => !IsNextToSea && Type == TileType.Land && Neighbours.Any(n => n.Type == TileType.City);
-    public bool CurrntlyBuildAble => IsSuitableForBuilding || BuildingOnTile == null;
+    bool IsSuitableForBuilding => !IsNextToSea && Type == TileType.Land && Neighbours.Any(n => n.Type == TileType.City && !n.IsNextToSea);
+    public bool CurrntlyBuildAble => IsSuitableForBuilding && BuildingOnTile == null;
 
     [SerializeField]
     public bool IsCapital = false;
@@ -61,10 +61,6 @@ public class TileScript : ComponentCacher
     public Vector2Int GridLocation;
 
     List<Color> TileColorList => Constants.ColorList.Select(c => new Color(c.r, c.g, c.b, 0.5f)).ToList();
-
-
-    [SerializeField]
-    private GameObject TeamShader => transform.Find("TeamShader").gameObject;
 
     [SerializeField]
     public int _t;
@@ -105,7 +101,7 @@ public class TileScript : ComponentCacher
                 c.a = 0.25f;
                 break;
         }
-        TeamShader.GetComponent<SpriteRenderer>().color = c;
+        TeamShaderSpriteRenderer.color = c;
     }
 
     private bool _h = false;
@@ -134,7 +130,7 @@ public class TileScript : ComponentCacher
     private void IncreaseByScale(float scale)
     {
         SpriteRenderer.sortingOrder = 4;
-        transform.Find("TeamShader").gameObject.GetComponent<SpriteRenderer>().sortingOrder = 5;
+        TeamShaderSpriteRenderer.sortingOrder = 5;
         transform.localScale = new Vector3(scale, scale, 1);
     }
 

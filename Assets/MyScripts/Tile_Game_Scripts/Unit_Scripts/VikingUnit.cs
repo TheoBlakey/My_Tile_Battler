@@ -25,22 +25,20 @@ public class VikingUnit : UnitBase
     }
 
     List<TileScript> _ac = new();
-    List<TileScript> AllCities
-    {
-        get => _ac.Any() ? _ac : FindAnyObjectByType<GameController>().AllCities;
-    }
+    List<TileScript> AllCities => _ac.Any() ? _ac : FindAnyObjectByType<GameController>().AllCities;
+
 
 
 
     public List<TeamUnit> closeUnits;
 
     public List<BuildingBase> closeBuildings;
-    public TileScript CurrentTargetCity;
+    TileScript CurrentTargetCity;
     List<TileScript> CurrentEnemyCitiesTiles => AllCities.
         Where(c => c.Team != 0 || c.Team != 5).
         ToList();
 
-    private void Start()
+    private new void Start()
     {
         base.Start();
 

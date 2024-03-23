@@ -6,10 +6,8 @@ using UnityEngine;
 public class VikingControllerComponent : ComponentCacher
 {
     List<TileScript> _wt = new();
-    List<TileScript> AllEdgeWaterTiles
-    {
-        get => _wt.Any() ? _wt : _wt = GameController.FullTileList.Where(t => t.Type == TileScript.TileType.Water && t.Neighbours.Count < 6).ToList();
-    }
+    List<TileScript> AllEdgeWaterTiles => _wt.Any() ? _wt : _wt = GameController.AllWaterTiles.Where(t => t.Neighbours.Count < 6).ToList();
+
     GameController GameController => CreateOrGetComponent<GameController>();
     CreateUnitOrBuildingComponent Creator => CreateOrGetComponent<CreateUnitOrBuildingComponent>();
 
@@ -22,9 +20,7 @@ public class VikingControllerComponent : ComponentCacher
         while (true)
         {
             yield return new WaitForSeconds(200);
-            FindTiles();
-            CreateUnits();
-
+            SpawnVikings();
         }
     }
     List<TileScript> TilesToMakeUnits;
@@ -35,16 +31,16 @@ public class VikingControllerComponent : ComponentCacher
         );
     }
 
-    void FindTiles()
+    void SpawnVikings()
     {
-        TilesToMakeUnits = new List<TileScript>();
+        TilesToMakeUnits = new();
 
         int numberOfBoats = 5;
         for (int i = 0; i < numberOfBoats; i++)
         {
             TilesToMakeUnits.Add(RandomNonChosenTile());
         }
-
+        CreateUnits();
     }
 
     TileScript RandomNonChosenTile()
@@ -58,23 +54,23 @@ public class VikingControllerComponent : ComponentCacher
 
             if (IsValidTile(RandomTile))
             {
-                break;
+                return RandomTile;
             }
         }
 
-        return RandomTile;
     }
 
     bool IsValidTile(TileScript tile)
     {
-        if (TilesToMakeUnits.Contains(tile))
-        {
-            return false;
-        }
         if (TilesToMakeUnits.Count == 0)
         {
             return true;
         }
+        if (TilesToMakeUnits.Contains(tile))
+        {
+            return false;
+        }
+
         TileScript firstTile = TilesToMakeUnits[0];
 
         float distance = Vector2.Distance(firstTile.transform.position, tile.transform.position);

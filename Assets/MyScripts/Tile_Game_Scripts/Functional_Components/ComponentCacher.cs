@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
 
 public class ComponentCacher : MonoBehaviour
@@ -12,7 +14,7 @@ public class ComponentCacher : MonoBehaviour
         string componentName = typeof(T).Name;
         if (childObjectName != null)
         {
-            gameObj = transform.Find("Text").gameObject;
+            gameObj = transform.Find(childObjectName).gameObject;
             componentName = gameObj.name + componentName;
         }
 
@@ -34,8 +36,20 @@ public class ComponentCacher : MonoBehaviour
         }
 
         ComponentDictionary.Add(componentName, newOrFoundComponent);
-
         return (T)newOrFoundComponent;
+    }
+
+    readonly Dictionary<string, GameObject> PrefabDictionary = new();
+    public GameObject LoadPrefab(string prefabName)
+    {
+        if (PrefabDictionary.TryGetValue(prefabName, out var prefab))
+        {
+            return prefab;
+
+        }
+        var loadedPrefab = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>($"Assets/Objects/{prefabName}.prefab").GameObject();
+        PrefabDictionary.Add(prefabName, loadedPrefab);
+        return loadedPrefab;
     }
 
 
